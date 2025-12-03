@@ -18,79 +18,41 @@ def charger_fichier(path):
     return couts, provisions, commandes
 
 
-def afficher_matrice(couts, valeurs, provisions, commandes):
-    n = len(couts)
-    m = len(couts[0])
+def afficher_couts(cost):
+    n = len(cost)
+    m = len(cost[0])
 
-    # -------- 1) Calcul LARGEUR DE COLONNE UNIQUE --------
-    contenus = []
+    print("\n=== MATRICE DES COUTS (Cij) ===")
+    print("      " + " ".join([f"C{j}" for j in range(m)]))
 
-    # en-têtes colonnes
-    contenus += ["C" + str(j+1) for j in range(m)]
-    contenus.append("Provisions")
-    contenus.append("Commande")
-
-    # étiquettes de lignes
-    contenus += [f"P{i+1}" for i in range(n)]
-
-    # coûts
-    for row in couts:
-        contenus += [str(c) for c in row]
-
-    # valeurs (non vides)
-    for row in valeurs:
-        contenus += [str(v) for v in row if str(v) != "" and v is not None]
-
-    # provisions et commandes
-    contenus += [str(p) for p in provisions]
-    contenus += [str(c) for c in commandes]
-    contenus.append(str(sum(commandes)))
-
-    max_len = max(len(x) for x in contenus)
-    col = max_len + 2
-
-    # -------- 2) Fonctions utilitaires --------
-    def ligne_sep():
-        return "+" + "+".join("-" * col for _ in range(m + 2)) + "+"
-
-    def print_row(cells, left_align_cols=None):
-        # left_align_cols = liste des colonnes à aligner à gauche
-        row = []
-        for idx, cell in enumerate(cells):
-            if left_align_cols and idx in left_align_cols:
-                row.append(str(cell).ljust(col))     # ALIGNÉ A GAUCHE
-            else:
-                row.append(str(cell).center(col))   # CENTRÉ
-        print("|" + "|".join(row) + "|")
-
-    # -------- 3) En-tête --------
-    print(ligne_sep())
-    header = [""] + ["C" + str(j+1) for j in range(m)] + ["Provisions"]
-    print_row(header)
-    print(ligne_sep())
-
-    # -------- 4) Lignes P_i --------
     for i in range(n):
+        ligne = [f"{cost[i][j]:>4}" for j in range(m)]
+        print(f"S{i} | " + " ".join(ligne))
 
-        # Colonnes Pᵢ × Cⱼ = alignées à gauche
-        # Indices 1 à m uniquement
-        left_cols = list(range(1, m + 1))
 
-        # Ligne des coûts
-        ligne_cost = [f"P{i+1}"] + [str(x) for x in couts[i]] + [str(provisions[i])]
-        print_row(ligne_cost, left_align_cols=left_cols)
+def afficher_quantites(x):
+    n = len(x)
+    m = len(x[0])
 
-        # Ligne des valeurs → centrées
-        ligne_val = [""] + [
-            "" if str(valeurs[i][j]) in ("", "None") else str(valeurs[i][j])
-            for j in range(m)
-        ] + [""]
-        print_row(ligne_val)
+    print("\n=== MATRICE DES QUANTITES (Xij) ===")
+    print("      " + " ".join([f"C{j}" for j in range(m)]))
 
-        print(ligne_sep())
+    for i in range(n):
+        ligne = [f"{x[i][j]:>4}" for j in range(m)]
+        print(f"S{i} | " + " ".join(ligne))
 
-    # -------- 5) Ligne Commande --------
-    ligne_cmd = ["Commande"] + [str(c) for c in commandes] + [str(sum(commandes))]
-    print_row(ligne_cmd)
-    print(ligne_sep())
+
+
+def afficher_basis(basis):
+    n = len(basis)
+    m = len(basis[0])
+
+    print("\n=== MATRICE BASIS (True = basique) ===")
+    print("      " + " ".join([f"C{j}" for j in range(m)]))
+
+    for i in range(n):
+        ligne = [ "  B " if basis[i][j] else "  . " for j in range(m) ]
+        print(f"S{i} | " + "".join(ligne))
+
+
 
