@@ -3,14 +3,13 @@ from math import inf
 from copy import deepcopy
 import random
 import time
-import contextlib
-import os
-import sys
 import matplotlib.pyplot as plt
 import csv
-# ============================================================
-#  Couleurs console (ANSI)
-# ============================================================
+
+# ============================================================================
+#  Utils console (couleurs optionnelles pour un affichage plus lisible)
+# ============================================================================
+
 RESET = "\033[0m"
 RED = "\033[91m"
 GREEN = "\033[92m"
@@ -20,670 +19,93 @@ BOLD = "\033[1m"
 
 
 def color(text, *styles):
-    """Retourne le texte entouré des styles ANSI donnés."""
     return "".join(styles) + str(text) + RESET
 
 
-# ============================================================
-#  Affichage du graphe (optionnel, via module externe)
-# ============================================================
-try:
-    from fonctions_dessiner_graphe import afficher_graphe
-except ImportError:
-    def afficher_graphe(graph):
-        print("\nAffichage texte du graphe biparti :")
-        for node, neighs in graph.items():
-            print(f"  {node} -> {neighs}")
+# ============================================================================
+#  Génération de problèmes de transport aléatoires
+# ============================================================================
 
-
-# ============================================================
-#  Affichages génériques (utile si tu veux débugger)
-# ============================================================
-def afficher_tableau(titre, mat):
-    """Affichage simple sans labels."""
-    print(f"\n=== {titre} ===")
-    for ligne in mat:
-        print(" ".join(f"{val:>4}" for val in ligne))
-
-
-def afficher_matrice_labels(titre, mat, formatter=str):
+def generer_probleme_transport(n, low=1, high=100):
     """
-    Affiche une matrice n x m avec en-têtes S_i / C_j.
-    Utilisé pour c*, Δ, etc.
+    Génère un problème de transport de taille n x n :
+      - couts : matrice (a_ij) entiers dans [low, high]
+      - provisions P_i = somme_j(temp_ij)
+      - commandes C_j = somme_i(temp_ij)
     """
-    n = len(mat)
-    m = len(mat[0]) if n > 0 else 0
+    couts = [
+        [random.randint(low, high) for _ in range(n)]
+        for _ in range(n)
+    ]
 
-    print(f"\n=== {titre} ===")
-    header = "      " + " ".join(f"{'C' + str(j):>6}" for j in range(m))
-    print(header)
-    print("      " + "-" * (6 * m))
+    temp = [
+        [random.randint(low, high) for _ in range(n)]
+        for _ in range(n)
+    ]
 
-    for i in range(n):
-        cellules = []
-        for j in range(m):
-            val = formatter(mat[i][j])
-            cellules.append(f"{val:>6}")
-        print(f"{'S' + str(i):>3} |" + "".join(cellules))
+    provisions = [sum(temp[i][j] for j in range(n)) for i in range(n)]
+    commandes = [sum(temp[i][j] for i in range(n)) for j in range(n)]
+
+    return couts, provisions, commandes
 
 
-def afficher_matrice_transport(titre, mat, provisions, commandes, highlight=None):
+# ============================================================================
+#  Méthode Nord-Ouest (solution initiale)
+# ============================================================================
+
+def methode_nord_ouest(couts, offre, demande):
     """
-    Affiche une matrice de transport (coûts ou quantités)
+    Méthode du coin Nord-Ouest : construit une solution de base faisable.
+    Retourne :
+      - x : matrice d'allocations
+      - basis : matrice booléenne indiquant les variables basiques
     """
-    n = len(mat)
-    m = len(mat[0]) if n > 0 else 0
-
-    print(f"\n=== {titre} ===")
-
-    header = "      |" + "".join(f"{('C' + str(j)):>6}" for j in range(m)) + " |  Prov"
-    print(header)
-    print("      " + "-" * (6 * m + 11))
-
-    for i in range(n):
-        row_cells = []
-        for j in range(m):
-            val = mat[i][j]
-            txt = f"{val:>6}"
-            if highlight is not None and (i, j) == highlight:
-                txt = color(txt, BOLD, CYAN)
-            row_cells.append(txt)
-        prov_txt = f"{provisions[i]:>5}"
-        print(f"{'S' + str(i):>3} |" + "".join(row_cells) + " |" + prov_txt)
-
-    print("      " + "-" * (6 * m + 11))
-
-    cmd_cells = "".join(f"{d:>6}" for d in commandes)
-    print(" Cmd  |" + cmd_cells)
-
-
-def afficher_couts(cost, provisions=None, commandes=None):
-    if provisions is not None and commandes is not None:
-        afficher_matrice_transport("Matrice des coûts (Cij)", cost, provisions, commandes)
-    else:
-        afficher_matrice_labels("Matrice des coûts (Cij)", cost, formatter=lambda v: v)
-
-
-def afficher_quantites(x, provisions=None, commandes=None):
-    if provisions is not None and commandes is not None:
-        afficher_matrice_transport("Matrice des quantités (Xij)", x, provisions, commandes)
-    else:
-        afficher_matrice_labels("Matrice des quantités (Xij)", x, formatter=lambda v: v)
-
-
-def afficher_basis(basis):
-    def fmt(v):
-        return "B" if v else "."
-
-    afficher_matrice_labels("Matrice BASIS (B = basique)", basis, formatter=fmt)
-
-
-def afficher_c_star(c_star):
-    afficher_matrice_labels("Coûts potentiels c* (E(Si) - E(Cj))", c_star, formatter=lambda v: v)
-
-
-def afficher_delta(delta, basis, entering):
-    n = len(delta)
-    m = len(delta[0])
-
-    if entering is None:
-        print("\nTous les couts marginaux Delta_ij sont >= 0 sur les cases non basiques :")
-        print("La base actuelle est OPTIMALE.")
-    else:
-        i_e, j_e = entering
-        val_e = delta[i_e][j_e]
-        print(
-            "\n"
-            f"Arete entrante choisie : ({i_e}, {j_e}) avec Delta_ij = "
-            f"{color(val_e, BOLD, RED)} (le plus negatif parmi les cases non basiques)."
-        )
-
-    print("\n=== Couts marginaux Delta = c - c* (Delta<0 en rouge, arete entrante en rouge gras) ===")
-    print("      " + " ".join(f"{'C'+str(j):>6}" for j in range(m)))
-    print("      " + "-" * (6 * m))
-
-    for i in range(n):
-        cellule_ligne = []
-        for j in range(m):
-            v = delta[i][j]
-            txt = f"{v:>6}"
-            if entering is not None and (i, j) == entering:
-                txt = color(txt, BOLD, RED)
-            elif v < 0 and not basis[i][j]:
-                txt = color(txt, RED)
-            cellule_ligne.append(txt)
-        print(f"{'S'+str(i):>3} |" + "".join(cellule_ligne))
-
-# ============================================================
-#  Construction du graphe biparti
-# ============================================================
-def build_graph(x, basis):
-    n = len(x)
-    m = len(x[0])
-
-    graph = {f"S{i}": [] for i in range(n)}
-    graph.update({f"C{j}": [] for j in range(m)})
-
-    for i in range(n):
-        for j in range(m):
-            if x[i][j] > 0 or basis[i][j] is True:
-                s = f"S{i}"
-                c = f"C{j}"
-                graph[s].append(c)
-                graph[c].append(s)
-
-    afficher_graphe(graph)
-    return graph
-
-
-# ============================================================
-#  Tests de connexité / acyclicité
-# ============================================================
-def is_connected(graph):
-    if not graph:
-        return True, set()
-
-    start = next(iter(graph))
-    visited = {start}
-    queue = deque([start])
-
-    while queue:
-        node = queue.popleft()
-        for neigh in graph[node]:
-            if neigh not in visited:
-                visited.add(neigh)
-                queue.append(neigh)
-
-    return len(visited) == len(graph), visited
-
-
-def is_acyclic(graph):
-    visited = set()
-
-    for start in graph:
-        if start not in visited:
-            queue = deque([(start, None)])
-
-            while queue:
-                node, parent = queue.popleft()
-
-                if node in visited:
-                    return False
-
-                visited.add(node)
-
-                for neigh in graph[node]:
-                    if neigh != parent:
-                        queue.append((neigh, node))
-
-    return True
-
-
-# ============================================================
-#  Potentiels, coûts potentiels, coûts marginaux
-# ============================================================
-def compute_potentials(x, cost, basis):
-    n = len(x)
-    m = len(x[0])
-
-    equations = []
-    for i in range(n):
-        for j in range(m):
-            if x[i][j] > 0 or basis[i][j] is True:
-                equations.append((f"S{i}", f"C{j}", cost[i][j]))
-
-    if not equations:
-        raise ValueError("Aucune équation basique trouvée pour calculer les potentiels.")
-
-    count = {}
-    for S, C, cij in equations:
-        count[S] = count.get(S, 0) + 1
-        count[C] = count.get(C, 0) + 1
-
-    root = max(count, key=count.get)
-    print(
-        "\nOn choisit le sommet de référence "
-        f"{color(root, BOLD, CYAN)} avec E({root}) = 0.\n"
-    )
-
-    E = {s: None for s in count}
-    E[root] = 0
-
-    changed = True
-    while changed:
-        changed = False
-        for S, C, cij in equations:
-            print(f"E({S}) - E({C}) = {cij}")
-
-            if E[S] is not None and E[C] is None:
-                E[C] = E[S] - cij
-                print(f"  ->  E({C}) = E({S}) - {cij} = {E[C]}")
-                changed = True
-            elif E[C] is not None and E[S] is None:
-                E[S] = E[C] + cij
-                print(f"  ->  E({S}) = E({C}) + {cij} = {E[S]}")
-                changed = True
-
-    print("\nPotentiels finaux :")
-    for s in sorted(E.keys()):
-        mark = " (référence)" if s == root else ""
-        print(f"  E({s}) = {E[s]}{mark}")
-    print()
-
-    return E
-
-
-def compute_potential_costs(x, E):
-    n = len(x)
-    m = len(x[0])
-    c_star = [[0 for _ in range(m)] for _ in range(n)]
-
-    for i in range(n):
-        for j in range(m):
-            c_star[i][j] = E[f"S{i}"] - E[f"C{j}"]
-
-    return c_star
-
-
-def compute_reduced_costs(cost, c_star):
-    n = len(cost)
-    m = len(cost[0])
-    delta = [[0 for _ in range(m)] for _ in range(n)]
-
-    for i in range(n):
-        for j in range(m):
-            delta[i][j] = cost[i][j] - c_star[i][j]
-
-    return delta
-
-
-# ============================================================
-#  Choix de l'arête entrante
-# ============================================================
-def find_entering_arc(x, basis, delta):
-    n = len(x)
-    m = len(x[0])
-
-    best = None
-    best_val = 0  # on cherche le plus négatif
-
-    for i in range(n):
-        for j in range(m):
-            if basis[i][j]:
-                continue
-            if delta[i][j] < best_val:
-                best_val = delta[i][j]
-                best = (i, j)
-
-    return best
-
-
-# ============================================================
-#  Construction du cycle pour l'arête entrante
-# ============================================================
-def build_cycle_for_entering_arc(x, basis, entering):
-    i0, j0 = entering
-    n = len(x)
-    m = len(x[0])
-
-    temp_basis = [row[:] for row in basis]
-    temp_basis[i0][j0] = True
-
-    graph = {}
-    for i in range(n):
-        graph[f"S{i}"] = []
-    for j in range(m):
-        graph[f"C{j}"] = []
-
-    for i in range(n):
-        for j in range(m):
-            if temp_basis[i][j] is True or x[i][j] > 0:
-                graph[f"S{i}"].append(f"C{j}")
-                graph[f"C{j}"].append(f"S{i}")
-
-    start = f"S{i0}"
-    target = f"C{j0}"
-
-    queue = deque([start])
-    parent = {start: None}
-
-    while queue:
-        node = queue.popleft()
-        for neigh in graph[node]:
-            if node == f"S{i0}" and neigh == f"C{j0}":
-                continue
-            if neigh not in parent:
-                parent[neigh] = node
-                queue.append(neigh)
-                if neigh == target:
-                    queue.clear()
-                    break
-
-    if target not in parent:
-        raise ValueError("Impossible de construire un cycle pour l'arête entrante")
-
-    path = []
-    cur = target
-    while cur is not None:
-        path.append(cur)
-        cur = parent[cur]
-    path.reverse()
-
-    cycle_positions = []
-    for k in range(len(path) - 1):
-        a = path[k]
-        b = path[k + 1]
-        if a.startswith("S"):
-            i = int(a[1:])
-            j = int(b[1:])
+    couts = deepcopy(couts)
+    offre = offre[:]
+    demande = demande[:]
+
+    n = len(offre)
+    m = len(demande)
+
+    if sum(offre) != sum(demande):
+        raise ValueError("Problème non équilibré : somme(offre) != somme(demande)")
+
+    x = [[0 for _ in range(m)] for _ in range(n)]
+    basis = [[False for _ in range(m)] for _ in range(n)]
+
+    i = 0
+    j = 0
+    while i < n and j < m:
+        q = min(offre[i], demande[j])
+        x[i][j] = q
+        basis[i][j] = True
+
+        offre[i] -= q
+        demande[j] -= q
+
+        if offre[i] == 0 and i < n - 1:
+            i += 1
+        elif demande[j] == 0 and j < m - 1:
+            j += 1
         else:
-            j = int(a[1:])
-            i = int(b[1:])
-        cycle_positions.append((i, j))
+            # fin de tableau (cas dégénéré)
+            i += 1
+            j += 1
 
-    cycle_positions.insert(0, (i0, j0))
-
-    cycle = []
-    sign = '+'
-    for pos in cycle_positions:
-        cycle.append((pos, sign))
-        sign = '-' if sign == '+' else '+'
-
-    return cycle
+    return x, basis
 
 
-# ============================================================
-#  Maximisation sur le cycle
-# ============================================================
-def maximize_on_cycle(x, cycle):
+# ============================================================================
+#  Méthode de Balas-Hammer (Vogel) – version silencieuse (verbose=False)
+# ============================================================================
+
+def methode_balas_hammer(couts, offre, demande, verbose=False):
     """
-    Applique le deplacement de quantite sur le cycle.
-    cycle = [ ((i,j), '+'), ((i,j), '-'), ... ]
+    Méthode de Balas-Hammer (Vogel) pour construire une solution initiale.
+    Retourne :
+      - x : matrice d'allocations
+      - basis : matrice booléenne des basiques
     """
-    theta = float("inf")
-
-    for (i, j), sign in cycle:
-        if sign == '-':
-            theta = min(theta, x[i][j])
-
-    print(f"\n> Maximisation sur le cycle avec theta = {theta}\n")
-    for (i, j), sign in cycle:
-        old = x[i][j]
-        if sign == '+':
-            x[i][j] += theta
-            op_symb = '+'
-            s_col = GREEN
-        else:
-            x[i][j] -= theta
-            op_symb = '-'
-            s_col = RED
-        print(
-            f"  x[{i},{j}] {color(op_symb, s_col)}= {theta} : {old} -> {x[i][j]}"
-        )
-
-    return x
-
-
-# ============================================================
-#  Réparation d'une base dégénérée
-# ============================================================
-def repair_degenerate_base(x, basis, cost, graph, visited):
-    """
-    Repare une base degeneree non connexe en ajoutant une case basique
-    de cout minimal reliant deux composantes.
-    Retourne (basis, added) avec added = (i,j) ou None.
-    """
-    n = len(x)
-    m = len(x[0])
-
-    all_nodes = set(graph.keys())
-    problematic = all_nodes - visited
-
-    problematic_S = {int(s[1:]) for s in problematic if s.startswith("S")}
-    problematic_C = {int(c[1:]) for c in problematic if c.startswith("C")}
-
-    visited_S = {int(s[1:]) for s in visited if s.startswith("S")}
-    visited_C = {int(c[1:]) for c in visited if c.startswith("C")}
-
-    isolated = [node for node in problematic if not graph[node]]
-    if problematic:
-        print(color("\nBase NON connexe.", YELLOW))
-        print("Sommets non relies a la base :", problematic)
-        if isolated:
-            print("Parmi eux, sommets totalement isoles :", isolated)
-
-    best_i, best_j = None, None
-    best_cost = float("inf")
-
-    for i in range(n):
-        for j in range(m):
-            if basis[i][j] is True:
-                continue
-            if x[i][j] != 0:
-                continue
-
-            connects_components = (
-                (i in problematic_S and j in visited_C) or
-                (i in visited_S and j in problematic_C)
-            )
-            if not connects_components:
-                continue
-
-            if cost[i][j] < best_cost:
-                best_cost = cost[i][j]
-                best_i, best_j = i, j
-
-    added = None
-    if best_i is not None:
-        print(
-            "\nOn cherche une case (i,j) de cout minimal reliant ces composantes."
-        )
-        print(
-            f"On ajoute la case basique ({best_i}, {best_j}) "
-            f"de cout {cost[best_i][best_j]} pour reparer la base."
-        )
-        basis[best_i][best_j] = True
-        added = (best_i, best_j)
-
-    return basis, added
-
-
-# ============================================================
-#  Méthode du marche-pied complète
-# ============================================================
-def marche_pied(x, basis, cost):
-    """
-    Methode du marche-pied complete.
-    Ameliore la base jusqu'a atteindre l'optimalite.
-    """
-    iteration = 1
-
-    while True:
-        print("\n====================================")
-        print(f"     ITERATION {iteration}")
-        print("====================================")
-
-        # Proposition actuelle
-        afficher_quantites(x)
-        afficher_basis(basis)
-
-        # 1. Graphe de la base
-        print("\n> Graphe de la base :")
-        graph = build_graph(x, basis)
-
-        # 2. Dégénérescence : on répare jusqu'à ce que le graphe soit connexe
-        while True:
-            print("\n> Test de connexité...")
-            connexe, visited = is_connected(graph)
-            if connexe:
-                print(color("Graphe connexe : toutes les lignes et colonnes sont reliées.", GREEN))
-                break
-            else:
-                print(color("Graphe NON connexe : certaines lignes/colonnes sont isolées.", YELLOW))
-                print(color("[WARNING] Base dégénérée : tentative de réparation...", YELLOW))
-                basis, added = repair_degenerate_base(x, basis, cost, graph, visited)
-                if added is None:
-                    print(color("Impossible de réparer davantage la base.", RED))
-                    break
-                print(
-                    "La base est réparée en ajoutant la case "
-                    f"{color(added, BOLD, CYAN)}."
-                )
-                afficher_basis(basis)
-                graph = build_graph(x, basis)
-
-        # 3. (optionnel) info sur les cycles
-        print("> Test d'acyclicité...")
-        acyclique = is_acyclic(graph)
-        if acyclique:
-            print(color("Graphe sans cycle parasite (acyclique).", GREEN))
-        else:
-            print(color("Cycle détecté dans la base (dégénérescence possible).", YELLOW))
-
-        # 3. Potentiels
-        print("\n> Calcul des potentiels :")
-        E = compute_potentials(x, cost, basis)
-
-        # 4. Couts potentiels c*
-        c_star = compute_potential_costs(x, E)
-        afficher_c_star(c_star)
-
-        # 5. Couts marginaux Delta + arete entrante
-        delta = compute_reduced_costs(cost, c_star)
-        entering = find_entering_arc(x, basis, delta)
-        afficher_delta(delta, basis, entering)
-
-        if entering is None:
-            print("\n[OK] Solution optimale atteinte !")
-            afficher_quantites(x)
-            return x, basis
-
-        print(f"\n> Arete entrante retenue : {color(entering, BOLD, RED)}")
-
-        # 7. Cycle correspondant
-        cycle = build_cycle_for_entering_arc(x, basis, entering)
-
-        print("\nCycle (positions du cycle avec signes) :")
-        for (i, j), sign in cycle:
-            col = GREEN if sign == '+' else RED
-            print(f"   ({i}, {j}) ({color(sign, col)})")
-
-        # 8. Maximisation
-        x = maximize_on_cycle(x, cycle)
-        print("\nVoici les matrices mises a jour apres deplacement sur le cycle :")
-        afficher_quantites(x)
-
-        # 9. Mise a jour de la base
-        ei, ej = entering
-        basis[ei][ej] = True
-        afficher_basis(basis)
-
-        iteration += 1
-
-
-
-# ============================================================
-#  Affichage Balas-Hammer détaillé
-# ============================================================
-def afficher_etat_balas(x, offre, demande,
-                        penalites_lignes=None, penalites_colonnes=None,
-                        i_choisie=None, j_choisie=None,
-                        idx_pen_ligne=None, idx_pen_col=None,
-                        delta_max=None, choisir_ligne=True):
-    n = len(x)
-    m = len(x[0]) if n > 0 else 0
-
-    print("\n--- Etat courant de la methode Balas-Hammer ---")
-
-    header = "      |" + "".join(f"{('C'+str(j)):>6}" for j in range(m)) + " |  Prov | Delta_ligne"
-    print(header)
-    print("      " + "-" * (6 * m + 19))
-
-    for i in range(n):
-        row_cells = []
-        for j in range(m):
-            val = x[i][j]
-            txt = f"{val:>6}"
-            if i_choisie is not None and j_choisie is not None and (i, j) == (i_choisie, j_choisie):
-                txt = color(txt, BOLD, CYAN)
-            row_cells.append(txt)
-
-        prov_txt = f"{offre[i]:>5}"
-
-        if penalites_lignes is not None:
-            pl = penalites_lignes[i]
-            if pl is None or pl < 0:
-                pl_txt = "   -"
-            else:
-                pl_txt = f"{pl:>4}"
-                if idx_pen_ligne is not None and i == idx_pen_ligne and delta_max is not None:
-                    pl_txt = color(pl_txt, BOLD, RED)
-        else:
-            pl_txt = "   -"
-
-        print(f"{'S'+str(i):>3} |" + "".join(row_cells) + " |" + prov_txt + " | " + pl_txt)
-
-    print("      " + "-" * (6 * m + 19))
-
-    cmd_cells = "".join(f"{d:>6}" for d in demande)
-    print(" Cmd  |" + cmd_cells + " |" + " " * 7)
-
-    if penalites_colonnes is not None:
-        line = "Delta_col |"
-        for j in range(m):
-            pc = penalites_colonnes[j]
-            if pc is None or pc < 0:
-                pc_txt = "   - "
-            else:
-                pc_txt = f"{pc:>4} "
-                if idx_pen_col is not None and j == idx_pen_col and delta_max is not None:
-                    pc_txt = color(pc_txt, BOLD, RED)
-            line += pc_txt
-        print(line)
-
-    if delta_max is not None:
-        if choisir_ligne and idx_pen_ligne is not None:
-            print(
-                f"\nLa penalite maximale est Delta = {color(delta_max, BOLD, RED)} "
-                f"sur la ligne S{idx_pen_ligne}."
-            )
-        elif not choisir_ligne and idx_pen_col is not None:
-            print(
-                f"\nLa penalite maximale est Delta = {color(delta_max, BOLD, RED)} "
-                f"sur la colonne C{idx_pen_col}."
-            )
-
-    if i_choisie is not None and j_choisie is not None:
-        print(
-            f"On choisit la case "
-            f"{color('('+str(i_choisie)+','+str(j_choisie)+')', BOLD, CYAN)} "
-            "comme cellule d'allocation (cout minimal sur la ligne/colonne choisie)."
-        )
-
-
-# ============================================================
-#  Coût total
-# ============================================================
-def calculer_cout_transport(allocations, couts, afficher=False):
-    n = len(allocations)
-    m = len(allocations[0])
-    cout_total = 0
-
-    for i in range(n):
-        for j in range(m):
-            cout_total += allocations[i][j] * couts[i][j]
-
-    if afficher:
-        print("\n===== COÛT TOTAL =====")
-        print(f"Cost = {cout_total}")
-
-    return cout_total
-
-
-# ============================================================
-#  Méthode de Balas-Hammer (Vogel)
-# ============================================================
-def methode_balas_hammer(couts, offre, demande, verbose=True):
     couts = deepcopy(couts)
     offre = offre[:]
     demande = demande[:]
@@ -698,18 +120,15 @@ def methode_balas_hammer(couts, offre, demande, verbose=True):
     lignes_actives = [True] * n
     colonnes_actives = [True] * m
 
-    if verbose:
-        afficher_etat_balas(x, offre, demande)
-
     def calculer_penalites():
         penalites_lignes = [None] * n
         penalites_colonnes = [None] * m
 
+        # pénalités lignes
         for i in range(n):
             if not lignes_actives[i] or offre[i] == 0:
                 penalites_lignes[i] = -1
                 continue
-
             couts_ligne_i = [
                 couts[i][j]
                 for j in range(m)
@@ -723,11 +142,11 @@ def methode_balas_hammer(couts, offre, demande, verbose=True):
                 couts_ligne_i.sort()
                 penalites_lignes[i] = couts_ligne_i[1] - couts_ligne_i[0]
 
+        # pénalités colonnes
         for j in range(m):
             if not colonnes_actives[j] or demande[j] == 0:
                 penalites_colonnes[j] = -1
                 continue
-
             couts_col_j = [
                 couts[i][j]
                 for i in range(n)
@@ -759,13 +178,8 @@ def methode_balas_hammer(couts, offre, demande, verbose=True):
 
         choisir_ligne = len(meilleures_lignes) > 0 and (max_pl >= max_pc)
 
-        i_choisie = j_choisie = None
-        idx_pen_ligne = idx_pen_col = None
-
         if choisir_ligne:
-            idx_pen_ligne = meilleures_lignes[0]
-            i_choisie = idx_pen_ligne
-
+            i_choisie = meilleures_lignes[0]
             cout_min = inf
             j_choisie = None
             for j in range(m):
@@ -774,9 +188,7 @@ def methode_balas_hammer(couts, offre, demande, verbose=True):
                         cout_min = couts[i_choisie][j]
                         j_choisie = j
         else:
-            idx_pen_col = meilleures_colonnes[0]
-            j_choisie = idx_pen_col
-
+            j_choisie = meilleures_colonnes[0]
             cout_min = inf
             i_choisie = None
             for i in range(n):
@@ -786,21 +198,6 @@ def methode_balas_hammer(couts, offre, demande, verbose=True):
                         i_choisie = i
 
         quantite = min(offre[i_choisie], demande[j_choisie])
-
-        if verbose:
-            print(f"\n=== Itération Balas-Hammer #{iteration} ===")
-            afficher_etat_balas(
-                x, offre, demande,
-                penalites_lignes, penalites_colonnes,
-                i_choisie=i_choisie, j_choisie=j_choisie,
-                idx_pen_ligne=idx_pen_ligne, idx_pen_col=idx_pen_col,
-                delta_max=max_pg, choisir_ligne=choisir_ligne
-            )
-            print(
-                f"\n→ Allocation possible dans la case ({i_choisie}, {j_choisie}) : "
-                f"min(offre, demande) = {quantite}"
-            )
-
         x[i_choisie][j_choisie] = quantite
 
         offre[i_choisie] -= quantite
@@ -817,108 +214,427 @@ def methode_balas_hammer(couts, offre, demande, verbose=True):
     return x, basis
 
 
-# ============================================================
-#  MÉTHODE NORD-OUEST (implémentation simple)
-# ============================================================
-def methode_nord_ouest(couts, offre, demande, verbose=False):
+# ============================================================================
+#  Marche-pied – VERSION RAPIDE (optimisée, sans prints)
+# ============================================================================
+
+def _build_graph_from_basis(basis):
     """
-    Construction d'une solution initiale par la méthode du coin Nord-Ouest.
-    Retourne (x, basis).
+    Construit le graphe biparti (S_i, C_j) à partir de la matrice basis.
     """
-    couts = deepcopy(couts)
-    offre = offre[:]
-    demande = demande[:]
+    n = len(basis)
+    m = len(basis[0])
 
-    n = len(offre)
-    m = len(demande)
+    graph = {f"S{i}": [] for i in range(n)}
+    graph.update({f"C{j}": [] for j in range(m)})
 
-    if sum(offre) != sum(demande):
-        raise ValueError("Problème non équilibré : somme(offre) != somme(demande)")
+    for i in range(n):
+        for j in range(m):
+            if basis[i][j]:
+                s = f"S{i}"
+                c = f"C{j}"
+                graph[s].append(c)
+                graph[c].append(s)
 
-    x = [[0 for _ in range(m)] for _ in range(n)]
-    basis = [[False for _ in range(m)] for _ in range(n)]
+    return graph
 
-    i = 0
-    j = 0
 
-    iteration = 1
-    while i < n and j < m:
-        q = min(offre[i], demande[j])
-        x[i][j] = q
-        basis[i][j] = True
+def _is_connected_fast(graph):
+    if not graph:
+        return True, set()
 
-        if verbose:
-            print(f"[Nord-Ouest] Itération {iteration}: on alloue {q} en ({i},{j})")
-        iteration += 1
+    start = next(iter(graph))
+    visited = {start}
+    queue = deque([start])
 
-        offre[i] -= q
-        demande[j] -= q
+    while queue:
+        node = queue.popleft()
+        for neigh in graph[node]:
+            if neigh not in visited:
+                visited.add(neigh)
+                queue.append(neigh)
 
-        if offre[i] == 0 and i < n - 1:
-            i += 1
-        elif demande[j] == 0 and j < m - 1:
-            j += 1
+    return len(visited) == len(graph), visited
+
+
+def _repair_degenerate_base_fast(x, basis, cost, graph, visited):
+    """
+    Répare une base non connexe en ajoutant une case basique de coût minimal
+    reliant deux composantes. Version sans affichage.
+    """
+    n = len(x)
+    m = len(x[0])
+
+    all_nodes = set(graph.keys())
+    problematic = all_nodes - visited
+
+    problematic_S = {int(s[1:]) for s in problematic if s.startswith("S")}
+    problematic_C = {int(c[1:]) for c in problematic if c.startswith("C")}
+
+    visited_S = {int(s[1:]) for s in visited if s.startswith("S")}
+    visited_C = {int(c[1:]) for c in visited if c.startswith("C")}
+
+    best_i, best_j = None, None
+    best_cost = float("inf")
+
+    for i in range(n):
+        for j in range(m):
+            if basis[i][j]:
+                continue
+            if x[i][j] != 0:
+                continue
+
+            connects = (
+                (i in problematic_S and j in visited_C) or
+                (i in visited_S and j in problematic_C)
+            )
+            if not connects:
+                continue
+
+            if cost[i][j] < best_cost:
+                best_cost = cost[i][j]
+                best_i, best_j = i, j
+
+    if best_i is not None:
+        basis[best_i][best_j] = True
+        return basis, (best_i, best_j)
+
+    return basis, None
+
+
+def _compute_potentials_fast(cost, basis):
+    """
+    Calcule les potentiels u[i] (pour S_i) et v[j] (pour C_j)
+    à partir de la base (n+m-1 arcs, graphe connexe).
+    Relation : u[i] - v[j] = cost[i][j] pour toutes les cases basiques.
+    """
+    n = len(cost)
+    m = len(cost[0])
+
+    u = [None] * n
+    v = [None] * m
+
+    # Construire la liste des arcs de base
+    adj = {f"S{i}": [] for i in range(n)}
+    adj.update({f"C{j}": [] for j in range(m)})
+
+    for i in range(n):
+        for j in range(m):
+            if basis[i][j]:
+                s = f"S{i}"
+                c = f"C{j}"
+                adj[s].append((c, cost[i][j]))
+                adj[c].append((s, cost[i][j]))
+
+    # On fixe u[0] = 0 comme référence et on propage
+    u[0] = 0
+    queue = deque([f"S0"])
+    visited = set([f"S0"])
+
+    while queue:
+        node = queue.popleft()
+        if node.startswith("S"):
+            i = int(node[1:])
+            for neigh, cij in adj[node]:
+                if neigh.startswith("C"):
+                    j = int(neigh[1:])
+                    if v[j] is None and u[i] is not None:
+                        v[j] = u[i] - cij
+                    if neigh not in visited:
+                        visited.add(neigh)
+                        queue.append(neigh)
+        else:  # C_j
+            j = int(node[1:])
+            for neigh, cij in adj[node]:
+                if neigh.startswith("S"):
+                    i = int(neigh[1:])
+                    if u[i] is None and v[j] is not None:
+                        u[i] = v[j] + cij
+                    if neigh not in visited:
+                        visited.add(neigh)
+                        queue.append(neigh)
+
+    return u, v
+
+
+def _compute_reduced_costs_fast(cost, u, v):
+    n = len(cost)
+    m = len(cost[0])
+    delta = [[0.0 for _ in range(m)] for _ in range(n)]
+    for i in range(n):
+        for j in range(m):
+            c_star = u[i] - v[j]
+            delta[i][j] = cost[i][j] - c_star
+    return delta
+
+
+def _find_entering_arc_fast(basis, delta):
+    """
+    Trouve l'arête entrante (i,j) correspondant au Delta_ij le plus négatif
+    parmi les cases non basiques. Retourne None si tous Delta_ij >= 0.
+    """
+    n = len(delta)
+    m = len(delta[0])
+
+    best = None
+    best_val = 0.0
+    for i in range(n):
+        for j in range(m):
+            if basis[i][j]:
+                continue
+            if delta[i][j] < best_val:
+                best_val = delta[i][j]
+                best = (i, j)
+    return best
+
+
+def _build_cycle_for_entering_arc_fast(basis, entering):
+    """
+    Construit le cycle associé à l'arête entrante.
+    Retourne une liste [((i,j), signe), ...] où signe ∈ {'+','-'}.
+    """
+    i0, j0 = entering
+    n = len(basis)
+    m = len(basis[0])
+
+    # base temporaire avec l'arête entrante ajoutée
+    temp_basis = [row[:] for row in basis]
+    temp_basis[i0][j0] = True
+
+    # construire le graphe
+    graph = {f"S{i}": [] for i in range(n)}
+    graph.update({f"C{j}": [] for j in range(m)})
+
+    for i in range(n):
+        for j in range(m):
+            if temp_basis[i][j]:
+                s = f"S{i}"
+                c = f"C{j}"
+                graph[s].append(c)
+                graph[c].append(s)
+
+    start = f"S{i0}"
+    target = f"C{j0}"
+
+    # BFS pour trouver un chemin de start à target
+    queue = deque([start])
+    parent = {start: None}
+
+    while queue:
+        node = queue.popleft()
+        for neigh in graph[node]:
+            # éviter d'utiliser immédiatement l'arête directe (S_i0, C_j0)
+            if node == f"S{i0}" and neigh == f"C{j0}":
+                continue
+            if neigh not in parent:
+                parent[neigh] = node
+                queue.append(neigh)
+                if neigh == target:
+                    queue.clear()
+                    break
+
+    if target not in parent:
+        raise ValueError("Impossible de construire le cycle pour l'arête entrante.")
+
+    # reconstituer le chemin
+    path = []
+    cur = target
+    while cur is not None:
+        path.append(cur)
+        cur = parent[cur]
+    path.reverse()  # start -> target
+
+    # convertir en positions (i,j)
+    cycle_positions = []
+    for k in range(len(path) - 1):
+        a = path[k]
+        b = path[k + 1]
+        if a.startswith("S"):
+            i = int(a[1:])
+            j = int(b[1:])
         else:
-            # cas dégénérés (fin de tableau) : on sort
-            i += 1
-            j += 1
+            j = int(a[1:])
+            i = int(b[1:])
+        cycle_positions.append((i, j))
+
+    # insérer l'arête entrante en première position
+    cycle_positions.insert(0, (i0, j0))
+
+    cycle = []
+    sign = '+'
+    for pos in cycle_positions:
+        cycle.append((pos, sign))
+        sign = '-' if sign == '+' else '+'
+
+    return cycle
+
+
+def _maximize_on_cycle_fast(x, basis, cycle):
+    """
+    Applique le déplacement de quantité sur le cycle.
+    Met à jour x et basis (choix d'une variable sortante parmi les '-').
+    """
+    # chercher theta (min x[i][j] sur les cases '-' avec x[i][j] > 0)
+    theta = float("inf")
+    leaving_pos = None
+
+    for (i, j), sign in cycle:
+        if sign == '-' and x[i][j] > 0:
+            if x[i][j] < theta:
+                theta = x[i][j]
+                leaving_pos = (i, j)
+
+    if theta == float("inf") or theta == 0:
+        # pas de mouvement possible (dégénérescence bloquante)
+        return False
+
+    # appliquer le mouvement
+    for (i, j), sign in cycle:
+        if sign == '+':
+            x[i][j] += theta
+        else:
+            x[i][j] -= theta
+
+    # mise à jour de la base : l'arête entrante devient basique
+    entering_pos = cycle[0][0]
+    ei, ej = entering_pos
+    basis[ei][ej] = True
+
+    # l'arête sortante devient non basique
+    if leaving_pos is not None and leaving_pos != entering_pos:
+        li, lj = leaving_pos
+        basis[li][lj] = False
+
+    return True
+
+
+def marche_pied_rapide(x, basis, cost, max_iterations_factor=10):
+    """
+    Méthode du marche-pied (stepping-stone) optimisée :
+      - pas d'affichage,
+      - base réparée si non connexe,
+      - potentiels calculés via BFS,
+      - cycle construit pour chaque arête entrante,
+      - mise à jour de x et de la base.
+    """
+    n = len(x)
+    m = len(x[0])
+    max_iterations = max_iterations_factor * n * m
+    iteration = 0
+
+    while True:
+        iteration += 1
+        if iteration > max_iterations:
+            # sécurité : on arrête si trop d'itérations
+            break
+
+        # 1. construire le graphe de base
+        graph = _build_graph_from_basis(basis)
+
+        # 2. vérifier la connexité, sinon réparer la base
+        while True:
+            connexe, visited = _is_connected_fast(graph)
+            if connexe:
+                break
+            basis, added = _repair_degenerate_base_fast(x, basis, cost, graph, visited)
+            if added is None:
+                break
+            graph = _build_graph_from_basis(basis)
+
+        # 3. calcul des potentiels
+        u, v = _compute_potentials_fast(cost, basis)
+
+        # 4. coûts réduits
+        delta = _compute_reduced_costs_fast(cost, u, v)
+
+        # 5. recherche de l'arête entrante
+        entering = _find_entering_arc_fast(basis, delta)
+        if entering is None:
+            # optimalité atteinte
+            break
+
+        # 6. construire le cycle et maximiser
+        cycle = _build_cycle_for_entering_arc_fast(basis, entering)
+        ok = _maximize_on_cycle_fast(x, basis, cycle)
+        if not ok:
+            # pas de progression possible => on arrête pour éviter boucle infinie
+            break
 
     return x, basis
 
 
-# ============================================================
-#  Génération de problèmes de transport aléatoires
-# ============================================================
-def generer_probleme_transport(n, low=1, high=100):
+# ============================================================================
+#  Une expérience (pour un n donné)
+# ============================================================================
+
+def _une_experience(n):
     """
-    Génère un problème de transport de taille n x n :
-      - couts : matrice A (a_ij) avec entiers entre [low, high]
-      - provisions P_i et commandes C_j équilibrées via une matrice temp.
+    Effectue UNE répétition complète pour une taille n :
+      - génération d'un problème de transport aléatoire,
+      - calcul de θ_NO (Nord-Ouest),
+      - calcul de θ_BH (Balas-Hammer),
+      - calcul de t_NO (marche-pied à partir de NO),
+      - calcul de t_BH (marche-pied à partir de BH).
     """
-    couts = [
-        [random.randint(low, high) for _ in range(n)]
-        for _ in range(n)
-    ]
+    # génération du problème
+    couts, provisions, commandes = generer_probleme_transport(n)
 
-    temp = [
-        [random.randint(low, high) for _ in range(n)]
-        for _ in range(n)
-    ]
+    # 1) Nord-Ouest
+    t0 = time.perf_counter()
+    x_NO, basis_NO = methode_nord_ouest(
+        couts,
+        provisions,
+        commandes
+    )
+    t1 = time.perf_counter()
+    theta_NO = t1 - t0
 
-    provisions = [sum(temp[i][j] for j in range(n)) for i in range(n)]
-    commandes = [sum(temp[i][j] for i in range(n)) for j in range(n)]
+    # 2) Balas-Hammer
+    t0 = time.perf_counter()
+    x_BH, basis_BH = methode_balas_hammer(
+        couts,
+        provisions,
+        commandes,
+        verbose=False
+    )
+    t1 = time.perf_counter()
+    theta_BH = t1 - t0
 
-    return couts, provisions, commandes
+    # 3) Marche-pied à partir de Nord-Ouest
+    t0 = time.perf_counter()
+    marche_pied_rapide(
+        deepcopy(x_NO),
+        deepcopy(basis_NO),
+        couts
+    )
+    t1 = time.perf_counter()
+    t_NO = t1 - t0
+
+    # 4) Marche-pied à partir de Balas-Hammer
+    t0 = time.perf_counter()
+    marche_pied_rapide(
+        deepcopy(x_BH),
+        deepcopy(basis_BH),
+        couts
+    )
+    t1 = time.perf_counter()
+    t_BH = t1 - t0
+
+    return theta_NO, theta_BH, t_NO, t_BH
 
 
-# ============================================================
-#  Contexte pour couper les prints pendant les mesures
-# ============================================================
-@contextlib.contextmanager
-def suppress_stdout():
-    with open(os.devnull, "w") as devnull:
-        old_stdout = sys.stdout
-        try:
-            sys.stdout = devnull
-            yield
-        finally:
-            sys.stdout = old_stdout
+# ============================================================================
+#  Lancement des expériences – 100 répétitions par n, MONO-COEUR
+# ============================================================================
 
-
-# ============================================================
-#  Mesure des temps sur 100 instances par n
-# ============================================================
 def lancer_experiences(
         n_values=(10, 40, 100, 400, 1000, 4000, 10000),
         nb_repetitions=100
 ):
     """
-    Pour chaque n, génère nb_repetitions problèmes aléatoires
-    et mesure :
-      - θ_NO (Nord-Ouest)
-      - θ_BH (Balas-Hammer)
-      - t_NO (marche-pied avec Nord-Ouest)
-      - t_BH (marche-pied avec Balas-Hammer)
+    Pour chaque n dans n_values, effectue nb_repetitions expériences SEQUENTIELLES
+    (mono-coeur, conforme au sujet) et stocke les temps :
+      - θ_NO, θ_BH, t_NO, t_BH
     """
     resultats = {
         "theta_NO": {n: [] for n in n_values},
@@ -928,72 +644,29 @@ def lancer_experiences(
     }
 
     for n in n_values:
-        print(f"\n========== n = {n} ==========")
-        for k in range(nb_repetitions):
-            print(f"  → répétition {k + 1}/{nb_repetitions}")
+        print(color(f"\n========== n = {n} ==========", BOLD, CYAN))
 
-            # génération d'un nouveau problème aléatoire
-            couts, provisions, commandes = generer_probleme_transport(n)
+        for rep in range(nb_repetitions):
+            theta_NO, theta_BH, t_NO, t_BH = _une_experience(n)
 
-            # 1) Nord-Ouest
-            print("     [1] Nord-Ouest...", end="", flush=True)
-            t0 = time.perf_counter()
-            x_NO, basis_NO = methode_nord_ouest(
-                deepcopy(couts),
-                provisions[:],
-                commandes[:],
-                verbose=False
+            resultats["theta_NO"][n].append(theta_NO)
+            resultats["theta_BH"][n].append(theta_BH)
+            resultats["t_NO"][n].append(t_NO)
+            resultats["t_BH"][n].append(t_BH)
+
+            print(
+                f"  Répétition {rep + 1:3d}/{nb_repetitions} : "
+                f"θNO={theta_NO:.6f}s, θBH={theta_BH:.6f}s, "
+                f"tNO={t_NO:.6f}s, tBH={t_BH:.6f}s"
             )
-            t1 = time.perf_counter()
-            resultats["theta_NO"][n].append(t1 - t0)
-            print(f" OK ({t1 - t0:.6f} s)")
-
-            # 2) Balas-Hammer
-            print("     [2] Balas-Hammer...", end="", flush=True)
-            t0 = time.perf_counter()
-            with suppress_stdout():
-                x_BH, basis_BH = methode_balas_hammer(
-                    deepcopy(couts),
-                    provisions[:],
-                    commandes[:],
-                    verbose=False
-                )
-            t1 = time.perf_counter()
-            resultats["theta_BH"][n].append(t1 - t0)
-            print(f" OK ({t1 - t0:.6f} s)")
-
-            # 3) Marche-pied à partir de Nord-Ouest
-            print("     [3] Marche-pied (NO)...", end="", flush=True)
-            t0 = time.perf_counter()
-            with suppress_stdout():
-                marche_pied(
-                    deepcopy(x_NO),
-                    deepcopy(basis_NO),
-                    couts
-                )
-            t1 = time.perf_counter()
-            resultats["t_NO"][n].append(t1 - t0)
-            print(f" OK ({t1 - t0:.6f} s)")
-
-            # 4) Marche-pied à partir de Balas-Hammer
-            print("     [4] Marche-pied (BH)...", end="", flush=True)
-            t0 = time.perf_counter()
-            with suppress_stdout():
-                marche_pied(
-                    deepcopy(x_BH),
-                    deepcopy(basis_BH),
-                    couts
-                )
-            t1 = time.perf_counter()
-            resultats["t_BH"][n].append(t1 - t0)
-            print(f" OK ({t1 - t0:.6f} s)")
 
     return resultats
 
 
-# ============================================================
-#  Tracés et analyses
-# ============================================================
+# ============================================================================
+#  Tracés & analyses
+# ============================================================================
+
 def tracer_nuage_points(resultats, cle, titre):
     plt.figure()
     for n, valeurs in resultats[cle].items():
@@ -1043,6 +716,9 @@ def ajouter_combinaisons(resultats):
 
 
 def calculer_rapport_NO_sur_BH(resultats):
+    if "theta_plus_t_NO" not in resultats or "theta_plus_t_BH" not in resultats:
+        ajouter_combinaisons(resultats)
+
     rapports = {}
     rapports_max = {}
 
@@ -1079,20 +755,18 @@ def tracer_rapports_max(rapports_max):
     plt.show()
 
 
-# ============================================================
+# ============================================================================
 #  Sauvegarde des résultats dans des fichiers CSV
-# ============================================================
+# ============================================================================
 
 def sauvegarder_resultats_bruts(resultats, nom_fichier="resultats_bruts.csv"):
     """
-    Sauvegarde, pour chaque n et chaque repetition k, les temps :
-      - theta_NO, theta_BH, t_NO, t_BH
-      - theta_NO + t_NO
-      - theta_BH + t_BH
-      - rapport (theta_NO + t_NO) / (theta_BH + t_BH)
-    dans un fichier CSV.
+    Sauvegarde, pour chaque n et chaque répétition k, les temps :
+      - θ_NO, θ_BH, t_NO, t_BH
+      - θ_NO + t_NO
+      - θ_BH + t_BH
+      - rapport (θ_NO + t_NO) / (θ_BH + t_BH)
     """
-    # On s'assure que les combinaisons sont présentes
     if "theta_plus_t_NO" not in resultats or "theta_plus_t_BH" not in resultats:
         ajouter_combinaisons(resultats)
 
@@ -1152,7 +826,6 @@ def sauvegarder_maximums(resultats, nom_fichier="resultats_max.csv"):
       - max(theta_NO + t_NO), max(theta_BH + t_BH)
       - max rapport (theta_NO + t_NO) / (theta_BH + t_BH)
     """
-    # S'assurer que les combinaisons et rapports sont calculés
     if "theta_plus_t_NO" not in resultats or "theta_plus_t_BH" not in resultats:
         ajouter_combinaisons(resultats)
     comp = calculer_rapport_NO_sur_BH(resultats)
@@ -1189,3 +862,54 @@ def sauvegarder_maximums(resultats, nom_fichier="resultats_max.csv"):
                 max_theta_plus_t_BH[n],
                 max_rapport[n]
             ])
+
+
+# ============================================================================
+#  Point d'entrée (exemple d'utilisation)
+# ============================================================================
+
+if __name__ == "__main__":
+    # ⚠ Attention : les grandes tailles (1000, 4000, 10000) avec 100 répétitions
+    # peuvent être TRES longues et très lourdes en mémoire.
+    # Pour tester rapidement, commence par :
+    # n_values = (10, 40, 100)
+    n_values = (10, 40, 100)  # adapte ensuite vers (10,40,100,400,1000,4000,10000)
+    nb_repetitions = 100
+
+    resultats = lancer_experiences(n_values=n_values, nb_repetitions=nb_repetitions)
+
+    # Ajout des combinaisons θ + t
+    ajouter_combinaisons(resultats)
+
+    # Nuages de points
+    tracer_nuage_points(resultats, "theta_NO", "Nuage de points θ_NO(n)")
+    tracer_nuage_points(resultats, "theta_BH", "Nuage de points θ_BH(n)")
+    tracer_nuage_points(resultats, "t_NO", "Nuage de points t_NO(n)")
+    tracer_nuage_points(resultats, "t_BH", "Nuage de points t_BH(n)")
+    tracer_nuage_points(resultats, "theta_plus_t_NO", "Nuage de points (θ_NO + t_NO)(n)")
+    tracer_nuage_points(resultats, "theta_plus_t_BH", "Nuage de points (θ_BH + t_BH)(n)")
+
+    # Enveloppes max (pire des cas)
+    max_theta_NO = calculer_max_par_n(resultats, "theta_NO")
+    max_theta_BH = calculer_max_par_n(resultats, "theta_BH")
+    max_t_NO = calculer_max_par_n(resultats, "t_NO")
+    max_t_BH = calculer_max_par_n(resultats, "t_BH")
+    max_theta_plus_t_NO = calculer_max_par_n(resultats, "theta_plus_t_NO")
+    max_theta_plus_t_BH = calculer_max_par_n(resultats, "theta_plus_t_BH")
+
+    tracer_courbe_max(max_theta_NO, "Pire des cas θ_NO(n)")
+    tracer_courbe_max(max_theta_BH, "Pire des cas θ_BH(n)")
+    tracer_courbe_max(max_t_NO, "Pire des cas t_NO(n)")
+    tracer_courbe_max(max_t_BH, "Pire des cas t_BH(n)")
+    tracer_courbe_max(max_theta_plus_t_NO, "Pire des cas (θ_NO + t_NO)(n)")
+    tracer_courbe_max(max_theta_plus_t_BH, "Pire des cas (θ_BH + t_BH)(n)")
+
+    # Comparaison NO vs BH (pire des cas)
+    comp = calculer_rapport_NO_sur_BH(resultats)
+    tracer_rapports_max(comp["rapports_max"])
+
+    # Sauvegarde CSV
+    sauvegarder_resultats_bruts(resultats, "resultats_bruts.csv")
+    sauvegarder_maximums(resultats, "resultats_max.csv")
+
+    print(color("\nFin des expériences et des tracés.", GREEN, BOLD))
