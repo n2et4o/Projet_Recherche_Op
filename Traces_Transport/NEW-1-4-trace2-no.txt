@@ -1,0 +1,123 @@
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 2
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 10 | 20 |
++----+----+----+
+| P2 | 30 | 10 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |   100     0
+ S1 |     0   100
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     .     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C1']
+  C0 -> ['S0']
+  C1 -> ['S1']
+
+> Test de connexité...
+[93mGraphe NON connexe : certaines lignes/colonnes sont isolées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+[93m
+Base NON connexe.[0m
+Sommets non reliés à la base : {'C1', 'S1'}
+
+-> On cherche une case (i,j) de coût minimal reliant ces composantes.
+-> On ajoute la case basique (0, 1) de coût 20 pour réparer la base.
+-> La base est réparée en ajoutant la case [1m[96m(0, 1)[0m.
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     .     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C1']
+  C0 -> ['S0']
+  C1 -> ['S0', 'S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS0[0m avec E(S0) = 0.
+
+E(S0) - E(C0) = 10
+  ⇒  E(C0) = E(S0) - 10 = -10
+E(S0) - E(C1) = 20
+  ⇒  E(C1) = E(S0) - 20 = -20
+E(S1) - E(C1) = 10
+  ⇒  E(S1) = E(C1) + 10 = -10
+E(S0) - E(C0) = 10
+E(S0) - E(C1) = 20
+E(S1) - E(C1) = 10
+
+Potentiels finaux :
+  E(C0) = -10
+  E(C1) = -20
+  E(S0) = 0 (référence)
+  E(S1) = -10
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    10    20
+ S1 |     0    10
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0     0
+ S1 |    30     0
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |   100     0
+ S1 |     0   100
+------------------------------------------------------------

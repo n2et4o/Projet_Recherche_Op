@@ -1,0 +1,1299 @@
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 1
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 30 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |   100     0
+ S1 |     0   100
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     .     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C1']
+  C0 -> ['S0']
+  C1 -> ['S1']
+
+> Test de connexité...
+[93mGraphe NON connexe : certaines lignes/colonnes sont isolées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+[93m
+Base NON connexe.[0m
+Sommets non reliés à la base : {'C1', 'S1'}
+
+-> On cherche une case (i,j) de coût minimal reliant ces composantes.
+-> On ajoute la case basique (1, 0) de coût 10 pour réparer la base.
+-> La base est réparée en ajoutant la case [1m[96m(1, 0)[0m.
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(S0) = E(C0) + 30 = 30
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = 10
+E(S1) - E(C1) = 50
+  ⇒  E(C1) = E(S1) - 50 = -40
+E(S0) - E(C0) = 30
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -40
+  E(S0) = 30
+  E(S1) = 10
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    70
+ S1 |    10    50
+
+Arête entrante choisie : (0, 1) avec Δ_ij = [1m[91m-50[0m (le plus négatif parmi les cases non basiques).
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0[1m[91m   -50[0m
+ S1 |     0     0
+
+> Arête entrante retenue : [1m[91m(0, 1)[0m
+
+Cycle (positions du cycle avec signes) :
+   (0, 1) ([92m+[0m)
+   (0, 0) ([91m-[0m)
+   (1, 0) ([92m+[0m)
+   (1, 1) ([91m-[0m)
+
+> Maximisation sur le cycle avec θ = 100
+
+  x[0,1] [92m+[0m= 100 : 0 -> 100
+  x[0,0] [91m-[0m= 100 : 100 -> 0
+  x[1,0] [92m+[0m= 100 : 0 -> 100
+  x[1,1] [91m-[0m= 100 : 100 -> 0
+
+Voici les matrices mises à jour après déplacement sur le cycle :
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+====================================
+     ITERATION 2
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[93mCycle détecté dans la base (dégénérescence possible).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS0[0m avec E(S0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(C0) = E(S0) - 30 = -30
+E(S0) - E(C1) = 20
+  ⇒  E(C1) = E(S0) - 20 = -20
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = -20
+E(S1) - E(C1) = 50
+E(S0) - E(C0) = 30
+E(S0) - E(C1) = 20
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = -30
+  E(C1) = -20
+  E(S0) = 0 (référence)
+  E(S1) = -20
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    20
+ S1 |    10     0
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0     0
+ S1 |     0    50
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 1
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 30 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |   100     0
+ S1 |     0   100
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     .     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C1']
+  C0 -> ['S0']
+  C1 -> ['S1']
+
+> Test de connexité...
+[93mGraphe NON connexe : certaines lignes/colonnes sont isolées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+[93m
+Base NON connexe.[0m
+Sommets non reliés à la base : {'C1', 'S1'}
+
+-> On cherche une case (i,j) de coût minimal reliant ces composantes.
+-> On ajoute la case basique (1, 0) de coût 10 pour réparer la base.
+-> La base est réparée en ajoutant la case [1m[96m(1, 0)[0m.
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(S0) = E(C0) + 30 = 30
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = 10
+E(S1) - E(C1) = 50
+  ⇒  E(C1) = E(S1) - 50 = -40
+E(S0) - E(C0) = 30
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -40
+  E(S0) = 30
+  E(S1) = 10
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    70
+ S1 |    10    50
+
+Arête entrante choisie : (0, 1) avec Δ_ij = [1m[91m-50[0m (le plus négatif parmi les cases non basiques).
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0[1m[91m   -50[0m
+ S1 |     0     0
+
+> Arête entrante retenue : [1m[91m(0, 1)[0m
+
+Cycle (positions du cycle avec signes) :
+   (0, 1) ([92m+[0m)
+   (0, 0) ([91m-[0m)
+   (1, 0) ([92m+[0m)
+   (1, 1) ([91m-[0m)
+
+> Maximisation sur le cycle avec θ = 100
+
+  x[0,1] [92m+[0m= 100 : 0 -> 100
+  x[0,0] [91m-[0m= 100 : 100 -> 0
+  x[1,0] [92m+[0m= 100 : 0 -> 100
+  x[1,1] [91m-[0m= 100 : 100 -> 0
+
+Voici les matrices mises à jour après déplacement sur le cycle :
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+====================================
+     ITERATION 2
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[93mCycle détecté dans la base (dégénérescence possible).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS0[0m avec E(S0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(C0) = E(S0) - 30 = -30
+E(S0) - E(C1) = 20
+  ⇒  E(C1) = E(S0) - 20 = -20
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = -20
+E(S1) - E(C1) = 50
+E(S0) - E(C0) = 30
+E(S0) - E(C1) = 20
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = -30
+  E(C1) = -20
+  E(S0) = 0 (référence)
+  E(S1) = -20
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    20
+ S1 |    10     0
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0     0
+ S1 |     0    50
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+------------------------------------------------------------
+===== COUT OPTIMAL =====
+===== COÛT TOTAL =====
+ Coût = 3000
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 1
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 30 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |   100     0
+ S1 |     0   100
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     .     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C1']
+  C0 -> ['S0']
+  C1 -> ['S1']
+
+> Test de connexité...
+[93mGraphe NON connexe : certaines lignes/colonnes sont isolées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+[93m
+Base NON connexe.[0m
+Sommets non reliés à la base : {'S1', 'C1'}
+
+-> On cherche une case (i,j) de coût minimal reliant ces composantes.
+-> On ajoute la case basique (1, 0) de coût 10 pour réparer la base.
+-> La base est réparée en ajoutant la case [1m[96m(1, 0)[0m.
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(S0) = E(C0) + 30 = 30
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = 10
+E(S1) - E(C1) = 50
+  ⇒  E(C1) = E(S1) - 50 = -40
+E(S0) - E(C0) = 30
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -40
+  E(S0) = 30
+  E(S1) = 10
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    70
+ S1 |    10    50
+
+Arête entrante choisie : (0, 1) avec Δ_ij = [1m[91m-50[0m (le plus négatif parmi les cases non basiques).
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0[1m[91m   -50[0m
+ S1 |     0     0
+
+> Arête entrante retenue : [1m[91m(0, 1)[0m
+
+Cycle (positions du cycle avec signes) :
+   (0, 1) ([92m+[0m)
+   (0, 0) ([91m-[0m)
+   (1, 0) ([92m+[0m)
+   (1, 1) ([91m-[0m)
+
+> Maximisation sur le cycle avec θ = 100
+
+  x[0,1] [92m+[0m= 100 : 0 -> 100
+  x[0,0] [91m-[0m= 100 : 100 -> 0
+  x[1,0] [92m+[0m= 100 : 0 -> 100
+  x[1,1] [91m-[0m= 100 : 100 -> 0
+
+Voici les matrices mises à jour après déplacement sur le cycle :
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+====================================
+     ITERATION 2
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[93mCycle détecté dans la base (dégénérescence possible).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS0[0m avec E(S0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(C0) = E(S0) - 30 = -30
+E(S0) - E(C1) = 20
+  ⇒  E(C1) = E(S0) - 20 = -20
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = -20
+E(S1) - E(C1) = 50
+E(S0) - E(C0) = 30
+E(S0) - E(C1) = 20
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = -30
+  E(C1) = -20
+  E(S0) = 0 (référence)
+  E(S1) = -20
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    20
+ S1 |    10     0
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0     0
+ S1 |     0    50
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+------------------------------------------------------------
+===== COUT OPTIMAL =====
+===== COÛT TOTAL =====
+ Coût = 3000
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 1
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 30 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== COUT OPTIMAL =====
+===== COÛT TOTAL =====
+ Coût = 3000
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 1
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 30 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== COUT OPTIMAL =====
+===== COÛT TOTAL =====
+ Coût = 3000
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 1
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 30 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== COUT OPTIMAL =====
+===== COÛT TOTAL =====
+ Coût = 3000
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 1
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 30 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 1
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 30 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |   100     0
+ S1 |     0   100
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     .     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C1']
+  C0 -> ['S0']
+  C1 -> ['S1']
+
+> Test de connexité...
+[93mGraphe NON connexe : certaines lignes/colonnes sont isolées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+[93m
+Base NON connexe.[0m
+Sommets non reliés à la base : {'C1', 'S1'}
+
+-> On cherche une case (i,j) de coût minimal reliant ces composantes.
+-> On ajoute la case basique (1, 0) de coût 10 pour réparer la base.
+-> La base est réparée en ajoutant la case [1m[96m(1, 0)[0m.
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(S0) = E(C0) + 30 = 30
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = 10
+E(S1) - E(C1) = 50
+  ⇒  E(C1) = E(S1) - 50 = -40
+E(S0) - E(C0) = 30
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -40
+  E(S0) = 30
+  E(S1) = 10
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    70
+ S1 |    10    50
+
+Arête entrante choisie : (0, 1) avec Δ_ij = [1m[91m-50[0m (le plus négatif parmi les cases non basiques).
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0[1m[91m   -50[0m
+ S1 |     0     0
+
+> Arête entrante retenue : [1m[91m(0, 1)[0m
+
+Cycle (positions du cycle avec signes) :
+   (0, 1) ([92m+[0m)
+   (0, 0) ([91m-[0m)
+   (1, 0) ([92m+[0m)
+   (1, 1) ([91m-[0m)
+
+> Maximisation sur le cycle avec θ = 100
+
+  x[0,1] [92m+[0m= 100 : 0 -> 100
+  x[0,0] [91m-[0m= 100 : 100 -> 0
+  x[1,0] [92m+[0m= 100 : 0 -> 100
+  x[1,1] [91m-[0m= 100 : 100 -> 0
+
+Voici les matrices mises à jour après déplacement sur le cycle :
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+====================================
+     ITERATION 2
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[93mCycle détecté dans la base (dégénérescence possible).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS0[0m avec E(S0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(C0) = E(S0) - 30 = -30
+E(S0) - E(C1) = 20
+  ⇒  E(C1) = E(S0) - 20 = -20
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = -20
+E(S1) - E(C1) = 50
+E(S0) - E(C0) = 30
+E(S0) - E(C1) = 20
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = -30
+  E(C1) = -20
+  E(S0) = 0 (référence)
+  E(S1) = -20
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    20
+ S1 |    10     0
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0     0
+ S1 |     0    50
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+------------------------------------------------------------
+===== COUT OPTIMAL =====
+===== COÛT TOTAL =====
+ Coût = 3000
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW-1
+Equipe        : 4
+Problème n°   : 1
+Méthode       : NO
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 30 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+
+Provisions :
+[100, 100]
+
+Commandes :
+[100, 100]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |   100     0
+ S1 |     0   100
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     .     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C1']
+  C0 -> ['S0']
+  C1 -> ['S1']
+
+> Test de connexité...
+[93mGraphe NON connexe : certaines lignes/colonnes sont isolées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+[93m
+Base NON connexe.[0m
+Sommets non reliés à la base : {'C1', 'S1'}
+
+-> On cherche une case (i,j) de coût minimal reliant ces composantes.
+-> On ajoute la case basique (1, 0) de coût 10 pour réparer la base.
+-> La base est réparée en ajoutant la case [1m[96m(1, 0)[0m.
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     .
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(S0) = E(C0) + 30 = 30
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = 10
+E(S1) - E(C1) = 50
+  ⇒  E(C1) = E(S1) - 50 = -40
+E(S0) - E(C0) = 30
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -40
+  E(S0) = 30
+  E(S1) = 10
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    70
+ S1 |    10    50
+
+Arête entrante choisie : (0, 1) avec Δ_ij = [1m[91m-50[0m (le plus négatif parmi les cases non basiques).
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0[1m[91m   -50[0m
+ S1 |     0     0
+
+> Arête entrante retenue : [1m[91m(0, 1)[0m
+
+Cycle (positions du cycle avec signes) :
+   (0, 1) ([92m+[0m)
+   (0, 0) ([91m-[0m)
+   (1, 0) ([92m+[0m)
+   (1, 1) ([91m-[0m)
+
+> Maximisation sur le cycle avec θ = 100
+
+  x[0,1] [92m+[0m= 100 : 0 -> 100
+  x[0,0] [91m-[0m= 100 : 100 -> 0
+  x[1,0] [92m+[0m= 100 : 0 -> 100
+  x[1,1] [91m-[0m= 100 : 100 -> 0
+
+Voici les matrices mises à jour après déplacement sur le cycle :
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+====================================
+     ITERATION 2
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[93mCycle détecté dans la base (dégénérescence possible).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     B     B
+ S1 |     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0', 'C1']
+  S1 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S0', 'S1']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS0[0m avec E(S0) = 0.
+
+E(S0) - E(C0) = 30
+  ⇒  E(C0) = E(S0) - 30 = -30
+E(S0) - E(C1) = 20
+  ⇒  E(C1) = E(S0) - 20 = -20
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = -20
+E(S1) - E(C1) = 50
+E(S0) - E(C0) = 30
+E(S0) - E(C1) = 20
+E(S1) - E(C0) = 10
+E(S1) - E(C1) = 50
+
+Potentiels finaux :
+  E(C0) = -30
+  E(C1) = -20
+  E(S0) = 0 (référence)
+  E(S1) = -20
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    30    20
+ S1 |    10     0
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |     0     0
+ S1 |     0    50
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   100     0
+------------------------------------------------------------
+===== COUT OPTIMAL =====
+===== COÛT TOTAL =====
+ Coût = 3000
+------------------------------------------------------------

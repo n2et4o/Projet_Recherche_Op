@@ -1,0 +1,1902 @@
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW1
+Equipe        : 4
+Problème n°   : 5
+Méthode       : BH
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+----+
+|    | C1 | C2 | C3 |
++----+----+----+----+
+| P1 | 5  | 7  | 8  |
++----+----+----+----+
+| P2 | 6  | 8  | 5  |
++----+----+----+----+
+| P3 | 6  | 7  | 7  |
++----+----+----+----+
+
+Provisions :
+[25, 25, 25]
+
+Commandes :
+[35, 20, 20]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10    15     0
+ S2 |     0     5    20
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     .
+ S2 |     .     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S2']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C1) = 8
+  ⇒  E(C1) = E(S1) - 8 = -2
+E(S2) - E(C1) = 7
+  ⇒  E(S2) = E(C1) + 7 = 5
+E(S2) - E(C2) = 7
+  ⇒  E(C2) = E(S2) - 7 = -2
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -2
+  E(C2) = -2
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 5
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     7     7
+ S1 |     6     8     8
+ S2 |     5     7     7
+
+Arête entrante choisie : (1, 2) avec Δ_ij = [1m[91m-3[0m (le plus négatif parmi les cases non basiques).
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     0     1
+ S1 |     0     0[1m[91m    -3[0m
+ S2 |     1     0     0
+
+> Arête entrante retenue : [1m[91m(1, 2)[0m
+
+Cycle (positions du cycle avec signes) :
+   (1, 2) ([92m+[0m)
+   (1, 1) ([91m-[0m)
+   (2, 1) ([92m+[0m)
+   (2, 2) ([91m-[0m)
+
+> Maximisation sur le cycle avec θ = 15
+
+  x[1,2] [92m+[0m= 15 : 0 -> 15
+  x[1,1] [91m-[0m= 15 : 15 -> 0
+  x[2,1] [92m+[0m= 15 : 5 -> 20
+  x[2,2] [91m-[0m= 15 : 20 -> 5
+
+Voici les matrices mises à jour après déplacement sur le cycle :
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+====================================
+     ITERATION 2
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1', 'C2']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S1', 'S2']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[93mCycle détecté dans la base (dégénérescence possible).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1', 'C2']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S1', 'S2']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS1[0m avec E(S1) = 0.
+
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+  ⇒  E(C0) = E(S1) - 6 = -6
+E(S1) - E(C1) = 8
+  ⇒  E(C1) = E(S1) - 8 = -8
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = -5
+E(S2) - E(C1) = 7
+  ⇒  E(S2) = E(C1) + 7 = -1
+E(S2) - E(C2) = 7
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = -1
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S1) - E(C2) = 5
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S1) - E(C2) = 5
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+
+Potentiels finaux :
+  E(C0) = -6
+  E(C1) = -8
+  E(C2) = -5
+  E(S0) = -1
+  E(S1) = 0 (référence)
+  E(S2) = -1
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     7     4
+ S1 |     6     8     5
+ S2 |     5     7     4
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     0     4
+ S1 |     0     0     0
+ S2 |     1     0     3
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW1
+Equipe        : 4
+Problème n°   : 5
+Méthode       : BH
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+----+
+|    | C1 | C2 | C3 |
++----+----+----+----+
+| P1 | 5  | 7  | 8  |
++----+----+----+----+
+| P2 | 6  | 8  | 5  |
++----+----+----+----+
+| P3 | 6  | 7  | 7  |
++----+----+----+----+
+
+Provisions :
+[25, 25, 25]
+
+Commandes :
+[35, 20, 20]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10    15     0
+ S2 |     0     5    20
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     .
+ S2 |     .     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S2']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C1) = 8
+  ⇒  E(C1) = E(S1) - 8 = -2
+E(S2) - E(C1) = 7
+  ⇒  E(S2) = E(C1) + 7 = 5
+E(S2) - E(C2) = 7
+  ⇒  E(C2) = E(S2) - 7 = -2
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -2
+  E(C2) = -2
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 5
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     7     7
+ S1 |     6     8     8
+ S2 |     5     7     7
+
+Arête entrante choisie : (1, 2) avec Δ_ij = [1m[91m-3[0m (le plus négatif parmi les cases non basiques).
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     0     1
+ S1 |     0     0[1m[91m    -3[0m
+ S2 |     1     0     0
+
+> Arête entrante retenue : [1m[91m(1, 2)[0m
+
+Cycle (positions du cycle avec signes) :
+   (1, 2) ([92m+[0m)
+   (1, 1) ([91m-[0m)
+   (2, 1) ([92m+[0m)
+   (2, 2) ([91m-[0m)
+
+> Maximisation sur le cycle avec θ = 15
+
+  x[1,2] [92m+[0m= 15 : 0 -> 15
+  x[1,1] [91m-[0m= 15 : 15 -> 0
+  x[2,1] [92m+[0m= 15 : 5 -> 20
+  x[2,2] [91m-[0m= 15 : 20 -> 5
+
+Voici les matrices mises à jour après déplacement sur le cycle :
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+====================================
+     ITERATION 2
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1', 'C2']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S1', 'S2']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[93mCycle détecté dans la base (dégénérescence possible).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1', 'C2']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S1', 'S2']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS1[0m avec E(S1) = 0.
+
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+  ⇒  E(C0) = E(S1) - 6 = -6
+E(S1) - E(C1) = 8
+  ⇒  E(C1) = E(S1) - 8 = -8
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = -5
+E(S2) - E(C1) = 7
+  ⇒  E(S2) = E(C1) + 7 = -1
+E(S2) - E(C2) = 7
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = -1
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S1) - E(C2) = 5
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S1) - E(C2) = 5
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+
+Potentiels finaux :
+  E(C0) = -6
+  E(C1) = -8
+  E(C2) = -5
+  E(S0) = -1
+  E(S1) = 0 (référence)
+  E(S2) = -1
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     7     4
+ S1 |     6     8     5
+ S2 |     5     7     4
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     0     4
+ S1 |     0     0     0
+ S2 |     1     0     3
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW1
+Equipe        : 4
+Problème n°   : 5
+Méthode       : BH
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+----+
+|    | C1 | C2 | C3 |
++----+----+----+----+
+| P1 | 5  | 7  | 8  |
++----+----+----+----+
+| P2 | 6  | 8  | 5  |
++----+----+----+----+
+| P3 | 6  | 7  | 7  |
++----+----+----+----+
+
+Provisions :
+[25, 25, 25]
+
+Commandes :
+[35, 20, 20]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10    15     0
+ S2 |     0     5    20
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     .
+ S2 |     .     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S2']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C1) = 8
+  ⇒  E(C1) = E(S1) - 8 = -2
+E(S2) - E(C1) = 7
+  ⇒  E(S2) = E(C1) + 7 = 5
+E(S2) - E(C2) = 7
+  ⇒  E(C2) = E(S2) - 7 = -2
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -2
+  E(C2) = -2
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 5
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     7     7
+ S1 |     6     8     8
+ S2 |     5     7     7
+
+Arête entrante choisie : (1, 2) avec Δ_ij = [1m[91m-3[0m (le plus négatif parmi les cases non basiques).
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     0     1
+ S1 |     0     0[1m[91m    -3[0m
+ S2 |     1     0     0
+
+> Arête entrante retenue : [1m[91m(1, 2)[0m
+
+Cycle (positions du cycle avec signes) :
+   (1, 2) ([92m+[0m)
+   (1, 1) ([91m-[0m)
+   (2, 1) ([92m+[0m)
+   (2, 2) ([91m-[0m)
+
+> Maximisation sur le cycle avec θ = 15
+
+  x[1,2] [92m+[0m= 15 : 0 -> 15
+  x[1,1] [91m-[0m= 15 : 15 -> 0
+  x[2,1] [92m+[0m= 15 : 5 -> 20
+  x[2,2] [91m-[0m= 15 : 20 -> 5
+
+Voici les matrices mises à jour après déplacement sur le cycle :
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+====================================
+     ITERATION 2
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1', 'C2']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S1', 'S2']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[93mCycle détecté dans la base (dégénérescence possible).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1', 'C2']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S1', 'S2']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS1[0m avec E(S1) = 0.
+
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+  ⇒  E(C0) = E(S1) - 6 = -6
+E(S1) - E(C1) = 8
+  ⇒  E(C1) = E(S1) - 8 = -8
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = -5
+E(S2) - E(C1) = 7
+  ⇒  E(S2) = E(C1) + 7 = -1
+E(S2) - E(C2) = 7
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = -1
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S1) - E(C2) = 5
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S1) - E(C2) = 5
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+
+Potentiels finaux :
+  E(C0) = -6
+  E(C1) = -8
+  E(C2) = -5
+  E(S0) = -1
+  E(S1) = 0 (référence)
+  E(S2) = -1
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     7     4
+ S1 |     6     8     5
+ S2 |     5     7     4
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     0     4
+ S1 |     0     0     0
+ S2 |     1     0     3
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW1
+Equipe        : 4
+Problème n°   : 5
+Méthode       : BH
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+----+
+|    | C1 | C2 | C3 |
++----+----+----+----+
+| P1 | 5  | 7  | 8  |
++----+----+----+----+
+| P2 | 6  | 8  | 5  |
++----+----+----+----+
+| P3 | 6  | 7  | 7  |
++----+----+----+----+
+
+Provisions :
+[25, 25, 25]
+
+Commandes :
+[35, 20, 20]
+
+===== RESOLUTION =====
+
+===== NORD-OUEST =====
+
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10    15     0
+ S2 |     0     5    20
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     .
+ S2 |     .     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S2']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C1) = 8
+  ⇒  E(C1) = E(S1) - 8 = -2
+E(S2) - E(C1) = 7
+  ⇒  E(S2) = E(C1) + 7 = 5
+E(S2) - E(C2) = 7
+  ⇒  E(C2) = E(S2) - 7 = -2
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -2
+  E(C2) = -2
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 5
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     7     7
+ S1 |     6     8     8
+ S2 |     5     7     7
+
+Arête entrante choisie : (1, 2) avec Δ_ij = [1m[91m-3[0m (le plus négatif parmi les cases non basiques).
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     0     1
+ S1 |     0     0[1m[91m    -3[0m
+ S2 |     1     0     0
+
+> Arête entrante retenue : [1m[91m(1, 2)[0m
+
+Cycle (positions du cycle avec signes) :
+   (1, 2) ([92m+[0m)
+   (1, 1) ([91m-[0m)
+   (2, 1) ([92m+[0m)
+   (2, 2) ([91m-[0m)
+
+> Maximisation sur le cycle avec θ = 15
+
+  x[1,2] [92m+[0m= 15 : 0 -> 15
+  x[1,1] [91m-[0m= 15 : 15 -> 0
+  x[2,1] [92m+[0m= 15 : 5 -> 20
+  x[2,2] [91m-[0m= 15 : 20 -> 5
+
+Voici les matrices mises à jour après déplacement sur le cycle :
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+====================================
+     ITERATION 2
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1', 'C2']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S1', 'S2']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[93mCycle détecté dans la base (dégénérescence possible).[0m
+[93m  Base dégénérée : tentative de réparation...[0m
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     B     B
+ S2 |     .     B     B
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C1', 'C2']
+  S2 -> ['C1', 'C2']
+  C0 -> ['S0', 'S1']
+  C1 -> ['S1', 'S2']
+  C2 -> ['S1', 'S2']
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mS1[0m avec E(S1) = 0.
+
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+  ⇒  E(C0) = E(S1) - 6 = -6
+E(S1) - E(C1) = 8
+  ⇒  E(C1) = E(S1) - 8 = -8
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = -5
+E(S2) - E(C1) = 7
+  ⇒  E(S2) = E(C1) + 7 = -1
+E(S2) - E(C2) = 7
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = -1
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S1) - E(C2) = 5
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C1) = 8
+E(S1) - E(C2) = 5
+E(S2) - E(C1) = 7
+E(S2) - E(C2) = 7
+
+Potentiels finaux :
+  E(C0) = -6
+  E(C1) = -8
+  E(C2) = -5
+  E(S0) = -1
+  E(S1) = 0 (référence)
+  E(S2) = -1
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     7     4
+ S1 |     6     8     5
+ S2 |     5     7     4
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     0     4
+ S1 |     0     0     0
+ S2 |     1     0     3
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |    10     0    15
+ S2 |     0    20     5
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1     C2
+      ------------------
+ S0 |     B     .     .
+ S1 |     B     .     B
+ S2 |     B     B     .
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C0']
+  S1 -> ['C0', 'C2']
+  S2 -> ['C0', 'C1']
+  C0 -> ['S0', 'S1', 'S2']
+  C1 -> ['S2']
+  C2 -> ['S1']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC0[0m avec E(C0) = 0.
+
+E(S0) - E(C0) = 5
+  ⇒  E(S0) = E(C0) + 5 = 5
+E(S1) - E(C0) = 6
+  ⇒  E(S1) = E(C0) + 6 = 6
+E(S1) - E(C2) = 5
+  ⇒  E(C2) = E(S1) - 5 = 1
+E(S2) - E(C0) = 6
+  ⇒  E(S2) = E(C0) + 6 = 6
+E(S2) - E(C1) = 7
+  ⇒  E(C1) = E(S2) - 7 = -1
+E(S0) - E(C0) = 5
+E(S1) - E(C0) = 6
+E(S1) - E(C2) = 5
+E(S2) - E(C0) = 6
+E(S2) - E(C1) = 7
+
+Potentiels finaux :
+  E(C0) = 0 (référence)
+  E(C1) = -1
+  E(C2) = 1
+  E(S0) = 5
+  E(S1) = 6
+  E(S2) = 6
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1     C2
+      ------------------
+ S0 |     5     6     4
+ S1 |     6     7     5
+ S2 |     6     7     5
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1     C2
+      ------------------
+ S0 |     0     1     4
+ S1 |     0     1     0
+ S2 |     0     0     2
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1     C2
+      ------------------
+ S0 |    25     0     0
+ S1 |     5     0    20
+ S2 |     5    20     0
+------------------------------------------------------------

@@ -1,0 +1,152 @@
+===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====
+
+Groupe        : NEW1
+Equipe        : 4
+Problème n°   : 8
+Méthode       : BH
+
+===== DONNEES INITIALES =====
+
+Matrice des coûts :
++----+----+----+
+|    | C1 | C2 |
++----+----+----+
+| P1 | 50 | 20 |
++----+----+----+
+| P2 | 10 | 50 |
++----+----+----+
+| P3 | 55 | 40 |
++----+----+----+
+| P4 | 35 | 45 |
++----+----+----+
+| P5 | 12 | 8  |
++----+----+----+
+
+Provisions :
+[100, 200, 100, 200, 200]
+
+Commandes :
+[300, 500]
+
+===== RESOLUTION =====
+
+===== MARCHE-PIED =====
+====================================
+     ITERATION 1
+====================================
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   200     0
+ S2 |     0   100
+ S3 |   100   100
+ S4 |     0   200
+
+=== Matrice BASIS (B = basique) ===
+          C0     C1
+      ------------
+ S0 |     .     B
+ S1 |     B     .
+ S2 |     .     B
+ S3 |     B     B
+ S4 |     .     B
+
+> Graphe de la base :
+
+Affichage texte du graphe biparti :
+  S0 -> ['C1']
+  S1 -> ['C0']
+  S2 -> ['C1']
+  S3 -> ['C0', 'C1']
+  S4 -> ['C1']
+  C0 -> ['S1', 'S3']
+  C1 -> ['S0', 'S2', 'S3', 'S4']
+
+> Test de connexité...
+[92mGraphe connexe : toutes les lignes et colonnes sont reliées.[0m
+> Test d'acyclicité...
+[92mGraphe sans cycle parasite (acyclique).[0m
+
+> Calcul des potentiels :
+
+On choisit le sommet de référence [1m[96mC1[0m avec E(C1) = 0.
+
+E(S0) - E(C1) = 20
+  ⇒  E(S0) = E(C1) + 20 = 20
+E(S1) - E(C0) = 10
+E(S2) - E(C1) = 40
+  ⇒  E(S2) = E(C1) + 40 = 40
+E(S3) - E(C0) = 35
+E(S3) - E(C1) = 45
+  ⇒  E(S3) = E(C1) + 45 = 45
+E(S4) - E(C1) = 8
+  ⇒  E(S4) = E(C1) + 8 = 8
+E(S0) - E(C1) = 20
+E(S1) - E(C0) = 10
+E(S2) - E(C1) = 40
+E(S3) - E(C0) = 35
+  ⇒  E(C0) = E(S3) - 35 = 10
+E(S3) - E(C1) = 45
+E(S4) - E(C1) = 8
+E(S0) - E(C1) = 20
+E(S1) - E(C0) = 10
+  ⇒  E(S1) = E(C0) + 10 = 20
+E(S2) - E(C1) = 40
+E(S3) - E(C0) = 35
+E(S3) - E(C1) = 45
+E(S4) - E(C1) = 8
+E(S0) - E(C1) = 20
+E(S1) - E(C0) = 10
+E(S2) - E(C1) = 40
+E(S3) - E(C0) = 35
+E(S3) - E(C1) = 45
+E(S4) - E(C1) = 8
+
+Potentiels finaux :
+  E(C0) = 10
+  E(C1) = 0 (référence)
+  E(S0) = 20
+  E(S1) = 20
+  E(S2) = 40
+  E(S3) = 45
+  E(S4) = 8
+
+
+=== Coûts potentiels c* (E(Si) - E(Cj)) ===
+          C0     C1
+      ------------
+ S0 |    10    20
+ S1 |    10    20
+ S2 |    30    40
+ S3 |    35    45
+ S4 |    -2     8
+
+Tous les coûts marginaux Δ_ij sont >= 0 sur les cases non basiques :
+la base actuelle est OPTIMALE.
+
+=== Coûts marginaux Δ = c - c* (Δ<0 en rouge, arête entrante en rouge gras) ===
+          C0     C1
+      ------------
+ S0 |    40     0
+ S1 |     0    30
+ S2 |    25     0
+ S3 |     0     0
+ S4 |    14     0
+
+ Solution optimale atteinte !
+
+=== Matrice des quantités (Xij) ===
+          C0     C1
+      ------------
+ S0 |     0   100
+ S1 |   200     0
+ S2 |     0   100
+ S3 |   100   100
+ S4 |     0   200
+------------------------------------------------------------
+===== COUT DE TRANSPORT (OPTIMAL) =====
+===== COÛT TOTAL =====
+ Coût = 17600
+------------------------------------------------------------
