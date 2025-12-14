@@ -304,9 +304,8 @@ def _repair_degenerate_base_fast(x, basis, cost, graph, visited):
 
 def _compute_potentials_fast(cost, basis):
     """
-    Calcule les potentiels u[i] (pour S_i) et v[j] (pour C_j)
-    à partir de la base (n+m-1 arcs, graphe connexe).
-    Relation : u[i] - v[j] = cost[i][j] pour toutes les cases basiques.
+    Calcule les potentiels u[i] et v[j] de manière ROBUSTE
+    (gère toutes les composantes connexes).
     """
     n = len(cost)
     m = len(cost[0])
@@ -314,47 +313,46 @@ def _compute_potentials_fast(cost, basis):
     u = [None] * n
     v = [None] * m
 
-    # Construire la liste des arcs de base
+    # Graphe biparti
     adj = {f"S{i}": [] for i in range(n)}
     adj.update({f"C{j}": [] for j in range(m)})
 
     for i in range(n):
         for j in range(m):
             if basis[i][j]:
-                s = f"S{i}"
-                c = f"C{j}"
-                adj[s].append((c, cost[i][j]))
-                adj[c].append((s, cost[i][j]))
+                adj[f"S{i}"].append((f"C{j}", cost[i][j]))
+                adj[f"C{j}"].append((f"S{i}", cost[i][j]))
 
-    # On fixe u[0] = 0 comme référence et on propage
-    u[0] = 0
-    queue = deque([f"S0"])
-    visited = set([f"S0"])
+    # On parcourt TOUTES les composantes
+    for i_start in range(n):
+        if u[i_start] is not None:
+            continue
 
-    while queue:
-        node = queue.popleft()
-        if node.startswith("S"):
-            i = int(node[1:])
-            for neigh, cij in adj[node]:
-                if neigh.startswith("C"):
+        # référence arbitraire
+        u[i_start] = 0
+        queue = deque([f"S{i_start}"])
+
+        while queue:
+            node = queue.popleft()
+
+            if node.startswith("S"):
+                i = int(node[1:])
+                for neigh, cij in adj[node]:
                     j = int(neigh[1:])
-                    if v[j] is None and u[i] is not None:
+                    if v[j] is None:
                         v[j] = u[i] - cij
-                    if neigh not in visited:
-                        visited.add(neigh)
                         queue.append(neigh)
-        else:  # C_j
-            j = int(node[1:])
-            for neigh, cij in adj[node]:
-                if neigh.startswith("S"):
+
+            else:  # C_j
+                j = int(node[1:])
+                for neigh, cij in adj[node]:
                     i = int(neigh[1:])
-                    if u[i] is None and v[j] is not None:
+                    if u[i] is None:
                         u[i] = v[j] + cij
-                    if neigh not in visited:
-                        visited.add(neigh)
                         queue.append(neigh)
 
     return u, v
+
 
 
 def _compute_reduced_costs_fast(cost, u, v):
@@ -913,3 +911,4 @@ if __name__ == "__main__":
     sauvegarder_maximums(resultats, "resultats_max.csv")
 
     print(color("\nFin des expériences et des tracés.", GREEN, BOLD))
+
