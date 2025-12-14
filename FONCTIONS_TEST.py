@@ -261,11 +261,12 @@ def is_acyclic(graph):
 def compute_potentials(x, cost, basis):
     """
     Calcule les potentiels E(S_i) et E(C_j) à partir des cases basiques.
-    Retourne un dict E : { "S0":0, "S1":..., "C0":..., ... }
+    Version ROBUSTE : aucune valeur None à la fin.
     """
     n = len(x)
     m = len(x[0])
 
+    # Liste des équations E(Si) - E(Cj) = cij
     equations = []
     for i in range(n):
         for j in range(m):
@@ -275,43 +276,44 @@ def compute_potentials(x, cost, basis):
     if not equations:
         raise ValueError("Aucune équation basique trouvée pour calculer les potentiels.")
 
-    # nombre d'apparitions de chaque sommet
-    count = {}
-    for S, C, cij in equations:
-        count[S] = count.get(S, 0) + 1
-        count[C] = count.get(C, 0) + 1
+    # Initialisation
+    E = {}
+    for i in range(n):
+        E[f"S{i}"] = None
+    for j in range(m):
+        E[f"C{j}"] = None
 
-    root = max(count, key=count.get)
-    print(
-        "\nOn choisit le sommet de référence "
-        f"{color(root, BOLD, CYAN)} avec E({root}) = 0.\n"
-    )
+    # On traite TOUTES les composantes connexes
+    for node in list(E.keys()):
+        if E[node] is not None:
+            continue
 
-    E = {s: None for s in count}
-    E[root] = 0
+        # Référence arbitraire
+        E[node] = 0
+        changed = True
 
-    changed = True
-    while changed:
-        changed = False
-        for S, C, cij in equations:
-            print(f"E({S}) - E({C}) = {cij}")
+        while changed:
+            changed = False
+            for S, C, cij in equations:
+                if E[S] is not None and E[C] is None:
+                    E[C] = E[S] - cij
+                    changed = True
+                elif E[C] is not None and E[S] is None:
+                    E[S] = E[C] + cij
+                    changed = True
 
-            if E[S] is not None and E[C] is None:
-                E[C] = E[S] - cij
-                print(f"  ⇒  E({C}) = E({S}) - {cij} = {E[C]}")
-                changed = True
-            elif E[C] is not None and E[S] is None:
-                E[S] = E[C] + cij
-                print(f"  ⇒  E({S}) = E({C}) + {cij} = {E[S]}")
-                changed = True
+    # Sécurité finale (plus jamais de None)
+    for k in E:
+        if E[k] is None:
+            E[k] = 0
 
     print("\nPotentiels finaux :")
     for s in sorted(E.keys()):
-        mark = " (référence)" if s == root else ""
-        print(f"  E({s}) = {E[s]}{mark}")
+        print(f"  E({s}) = {E[s]}")
     print()
 
     return E
+
 
 
 def compute_potential_costs(x, E):
@@ -1043,3 +1045,4 @@ def afficher_matrice(couts, valeurs, provisions, commandes):
     ligne_cmd = ["Commande"] + [str(c) for c in commandes] + [str(sum(commandes))]
     print_row(ligne_cmd)
     print(ligne_sep())
+
