@@ -380,8 +380,9 @@ def find_entering_arc(x, basis, delta):
 # ============================================================
 def build_cycle_for_entering_arc(x, basis, entering):
     """
-    Construit le cycle associé à l'arête entrante (i,j)
-    et retourne la liste [ ((i,j), '+'), ((i,j), '-'), ... ].
+    Construit le cycle associé à l'arête entrante (i,j).
+    Version robuste : si aucun cycle n'est trouvable,
+    on retourne None au lieu de lever une exception.
     """
     i0, j0 = entering
     n = len(x)
@@ -392,15 +393,12 @@ def build_cycle_for_entering_arc(x, basis, entering):
     temp_basis[i0][j0] = True
 
     # graphe biparti
-    graph = {}
-    for i in range(n):
-        graph[f"S{i}"] = []
-    for j in range(m):
-        graph[f"C{j}"] = []
+    graph = {f"S{i}": [] for i in range(n)}
+    graph.update({f"C{j}": [] for j in range(m)})
 
     for i in range(n):
         for j in range(m):
-            if temp_basis[i][j] is True or x[i][j] > 0:
+            if temp_basis[i][j] or x[i][j] > 0:
                 graph[f"S{i}"].append(f"C{j}")
                 graph[f"C{j}"].append(f"S{i}")
 
@@ -410,21 +408,27 @@ def build_cycle_for_entering_arc(x, basis, entering):
     queue = deque([start])
     parent = {start: None}
 
-    while queue:
+    found = False
+    while queue and not found:
         node = queue.popleft()
         for neigh in graph[node]:
-            # on interdit l'arête directe entrante
-            if node == f"S{i0}" and neigh == f"C{j0}":
+            # on interdit l'arête entrante directe
+            if node == start and neigh == target:
                 continue
             if neigh not in parent:
                 parent[neigh] = node
-                queue.append(neigh)
                 if neigh == target:
-                    queue.clear()
+                    found = True
                     break
+                queue.append(neigh)
 
+    # ❗ AUCUN CYCLE POSSIBLE → on abandonne proprement
     if target not in parent:
-        raise ValueError("Impossible de construire un cycle pour l'arête entrante")
+        print(color(
+            "⚠️ Aucun cycle trouvable pour l'arête entrante — elle est ignorée.",
+            YELLOW
+        ))
+        return None
 
     # reconstruction du chemin
     path = []
@@ -447,7 +451,6 @@ def build_cycle_for_entering_arc(x, basis, entering):
             i = int(b[1:])
         cycle_positions.append((i, j))
 
-    # on ajoute l'arête entrante au début
     cycle_positions.insert(0, (i0, j0))
 
     cycle = []
@@ -457,6 +460,7 @@ def build_cycle_for_entering_arc(x, basis, entering):
         sign = '-' if sign == '+' else '+'
 
     return cycle
+
 
 
 # ============================================================
@@ -626,6 +630,11 @@ def marche_pied(x, basis, cost):
 
         # 7. Cycle correspondant
         cycle = build_cycle_for_entering_arc(x, basis, entering)
+        if cycle is None:
+    basis[entering[0]][entering[1]] = False
+    iteration += 1
+    continue
+
 
         print("\nCycle (positions du cycle avec signes) :")
         for (i, j), sign in cycle:
@@ -1045,4 +1054,5 @@ def afficher_matrice(couts, valeurs, provisions, commandes):
     ligne_cmd = ["Commande"] + [str(c) for c in commandes] + [str(sum(commandes))]
     print_row(ligne_cmd)
     print(ligne_sep())
+
 
