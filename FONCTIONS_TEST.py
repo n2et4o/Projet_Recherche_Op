@@ -649,8 +649,7 @@ def marche_pied(x, basis, cost):
 def afficher_etat_balas(x, offre, demande,
                         penalites_lignes=None, penalites_colonnes=None,
                         i_choisie=None, j_choisie=None,
-                        idx_pen_ligne=None, idx_pen_col=None,
-                        delta_max=None, choisir_ligne=True):
+                        idx_pen_ligne=None, idx_pen_col=None,delta_max=None, choisir_ligne=True):
     """
     Affiche l'état de la matrice X, des provisions / demandes
     et des pénalités pour Balas-Hammer.

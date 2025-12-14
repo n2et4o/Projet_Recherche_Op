@@ -1,5 +1,5 @@
 from FONCTIONS_TEST import*
-from Nord_Ouest import *
+
 
 def main():
 
