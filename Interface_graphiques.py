@@ -5,13 +5,13 @@ import io, contextlib
 import re, pygame  # Importation du module pour manipuler les expressions régulières
 import sys, os #pour intérargir avec syst d'exploitation - manipuler les répertoires et fichiers
 from fonction import *
+from FONCTIONS_TEST import *
 
-#
 # Initialisation de Pygame
 pygame.init()
 
 # Paramètres de la fenêtre
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1200, 700
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Projet Recherche Opérationnelle - Résolution des problèmes de transport")
 
@@ -23,7 +23,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 backgrounds = [
-    pygame.image.load(resource_path("images/background1.png"))
+    pygame.image.load(resource_path("images/background3.png"))
 ]
 backgrounds = [pygame.transform.scale(bg, (WIDTH, HEIGHT)) for bg in backgrounds]
 
@@ -38,6 +38,7 @@ BLUE = (100, 100, 255)
 
 # Police
 font = pygame.font.Font(None, 50)
+font_help = pygame.font.Font(None, 20)
 input_font = pygame.font.Font(None, 40)
 
 # Modes de couleurs
@@ -69,6 +70,11 @@ class State:
         self.current_background_color = MODES[self.current_mode]["background"]
         self.text_color = MODES[self.current_mode]["text"]
         self.running = True
+
+        self.mode = "MENU"  # MENU | BALAS
+        self.page = 0  # écran courant dans Balas
+        self.bh_step = 0  # étape Balas-Hammer
+        self.pages = []
 
 
 
@@ -110,9 +116,9 @@ def draw_help(screen, state):
     )
 
     # Utilisation de render_text_multiline pour gérer l'affichage proprement
-    text = render_text_multiline(help_text, font, state.text_color, WIDTH - 40)
+    text = render_text_multiline(help_text, font_help, state.text_color, WIDTH - 10)
 
-    y_offset = HEIGHT // 4  # Position de départ
+    y_offset = HEIGHT // 10  # Position de départ
     for line in text:
         rendered_text = font.render(line, True, state.text_color)
         screen.blit(rendered_text, (20, y_offset))  # Légère marge pour éviter d'être collé au bord
@@ -154,7 +160,7 @@ def draw_input_box(screen, state):
     # Affichage de l'instruction dynamique
     screen.fill(state.current_background_color)
     if total > 0:
-        text = f"Entrez un numéro entre 0 et {total-1}:"
+        text = f"Entrez un numéro entre 1 et {total}:"
     elif total > 12:
         text = f"Le(s) fichier(s) que vous avez creer commence à partir de 0.\n Entrez un numéro entre 1 et {total}:"
     else:
@@ -172,7 +178,8 @@ def draw_matrice_menu(screen,state):
     screen.fill(state.current_background_color)
     title = font.render(f"matrice {state.chosen_matrice}", True, state.text_color)
     screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 50))
-    sub_options = ["Afficher le matrice", "floydifier le matrice", "Aide",
+    sub_options = ["Afficher le matrice", "Resolution via Nord-Ouest",
+                    "Resolution via Balas-Hammer", "Aide",
                    "Retour au menu principal", "Quitter"]
 
     for i, option in enumerate(sub_options):
@@ -200,3 +207,836 @@ def draw_options_menu(screen,state):
         screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 200 + i * 60))
 
     pygame.display.flip()
+
+
+def afficher_matrice_transport_pygame(screen, couts, valeurs, provisions, commandes, titre="Matrice",
+                                      highlight=None):
+
+    n = len(couts)
+    m = len(couts[0])
+
+    W, H = screen.get_width(), screen.get_height()
+
+    # =========================
+    # Marges écran
+    # =========================
+    margin_left = 40
+    margin_top = 120
+    margin_right = 40
+    margin_bottom = 60
+
+    # =========================
+    # Polices FIXES (important)
+    # =========================
+    font_cost = pygame.font.SysFont("consolas", 18)    # coût discret
+    font_value = pygame.font.SysFont("consolas", 18)   # valeur visible
+    font_label = pygame.font.SysFont("consolas", 18)
+    title_font = pygame.font.SysFont("consolas", 26, bold=True)
+    help_font = pygame.font.SysFont("consolas", 20)
+
+    # =========================
+    # Outils texte
+    # =========================
+    def text_width(text):
+        return font_label.render(text, True, (0, 0, 0)).get_width()
+
+    # =========================
+    # Largeurs adaptatives
+    # =========================
+    label_col_w = max(
+        text_width("Commande") + 20,
+        text_width(f"P{n}") + 20,
+        70
+    )
+
+    prov_col_w = max(
+        text_width("Provision") + 20,
+        text_width(str(max(provisions))) + 20,
+        80
+    )
+
+    remaining_w = W - margin_left - margin_right - label_col_w - prov_col_w
+    cell_w = max(60, min(remaining_w // m, 120))
+
+    total_rows = n + 2
+    remaining_h = H - margin_top - margin_bottom
+    cell_h = max(40, min(remaining_h // total_rows, 70))
+
+    # =========================
+    # Scroll
+    # =========================
+    x_offset = 0
+    y_offset = 0
+    clock = pygame.time.Clock()
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_RETURN, pygame.K_ESCAPE):
+                    running = False
+                elif event.key == pygame.K_DOWN:
+                    y_offset -= 30
+                elif event.key == pygame.K_UP:
+                    y_offset = min(y_offset + 30, 0)
+                elif event.key == pygame.K_RIGHT:
+                    x_offset -= 30
+                elif event.key == pygame.K_LEFT:
+                    x_offset = min(x_offset + 30, 0)
+
+        screen.fill((15, 15, 30))
+
+        x0 = margin_left + x_offset
+        y0 = margin_top + y_offset
+
+        # =========================
+        # Titre
+        # =========================
+        screen.blit(
+            title_font.render(titre, True, (255, 255, 0)),
+            (x0, y0 - 60)
+        )
+
+        # =========================
+        # Grille
+        # =========================
+        for i in range(n + 2):
+            for j in range(m + 2):
+
+                if j == 0:
+                    cw = label_col_w
+                    x = x0
+                elif j == m + 1:
+                    cw = prov_col_w
+                    x = x0 + label_col_w + m * cell_w
+                else:
+                    cw = cell_w
+                    x = x0 + label_col_w + (j - 1) * cell_w
+
+                y = y0 + i * cell_h
+
+                pygame.draw.rect(screen, (180, 180, 180), (x, y, cw, cell_h), 1)
+
+                # =========================
+                # Contenu
+                # =========================
+                text = None
+                color = (255, 255, 255)
+                align = "center"
+
+                # En-têtes colonnes
+                if i == 0 and 1 <= j <= m:
+                    text = f"C{j}"
+                    color = (200, 200, 255)
+
+                # En-tête Provision
+                elif i == 0 and j == m + 1:
+                    text = "Provision"
+                    color = (200, 200, 255)
+
+                # En-têtes lignes
+                elif j == 0 and 1 <= i <= n:
+                    text = f"P{i}"
+                    color = (200, 200, 255)
+
+                # Commande (label)
+                elif i == n + 1 and j == 0:
+                    text = "Commande"
+                    color = (200, 200, 255)
+                    align = "left"
+
+                # Provisions
+                elif 1 <= i <= n and j == m + 1:
+                    text = str(provisions[i - 1])
+
+                # Commandes
+                elif i == n + 1 and 1 <= j <= m:
+                    text = str(commandes[j - 1])
+
+                # Somme
+                elif i == n + 1 and j == m + 1:
+                    text = str(sum(commandes))
+
+                # Coûts + valeurs
+                elif 1 <= i <= n and 1 <= j <= m:
+                    ci, cj = i - 1, j - 1
+
+                    # Surbrillance Balas-Hammer
+                    if highlight == (ci, cj):
+                        pygame.draw.rect(
+                            screen,
+                            (255, 80, 80),
+                            (x + 2, y + 2, cw - 4, cell_h - 4),
+                            2
+                        )
+
+                    # coût (petit, fixe)
+                    surf_cost = font_cost.render(
+                        str(couts[ci][cj]), True, (150, 150, 255)
+                    )
+                    screen.blit(surf_cost, (x + 5, y + 4))
+
+                    # Valeur par défaut
+                    val = None
+
+                    if valeurs is not None and ci < len(valeurs) and cj < len(valeurs[ci]):
+                        val = valeurs[ci][cj]
+
+                    if val is not None:
+                        # couleur selon la valeur
+                        if val == 0:
+                            color_val = (120, 180, 255)  #  bleu pour 0
+                        else:
+                            color_val = (255, 120, 120)  #  rouge pour ≠ 0
+
+                        surf_val = font_value.render(str(val), True, color_val)
+                        screen.blit(
+                            surf_val,
+                            (
+                                x + cw // 2 - surf_val.get_width() // 2,
+                                y + cell_h - surf_val.get_height() - 4
+                            )
+                        )
+
+                if text is not None:
+                    surf = font_label.render(text, True, color)
+                    if align == "left":
+                        screen.blit(surf, (x + 6, y + cell_h // 2 - surf.get_height() // 2))
+                    else:
+                        screen.blit(
+                            surf,
+                            (
+                                x + cw // 2 - surf.get_width() // 2,
+                                y + cell_h // 2 - surf.get_height() // 2
+                            )
+                        )
+
+        # Aide
+        screen.blit(
+            help_font.render(
+                "Flèches : déplacer | ENTER / ESC : retour",
+                True,
+                (150, 150, 150)
+            ),
+            (20, H - 25)
+        )
+
+        pygame.display.flip()
+        clock.tick(60)
+
+
+
+def balas_hammer_pygame(screen, couts, steps):
+    """
+    Visualisation Pygame complète de la méthode de Balas-Hammer
+    avec pénalités Δ lignes / Δ colonnes intégrées
+    et cadrage ADAPTATIF comme afficher_matrice_transport_pygame.
+    """
+
+    index = 0
+    total = len(steps)
+
+    x_offset = 0
+    y_offset = 0
+
+    clock = pygame.time.Clock()
+    running = True
+
+    # =========================
+    # Polices
+    # =========================
+    font_cost = pygame.font.SysFont("consolas", 18)
+    font_value = pygame.font.SysFont("consolas", 18)
+    font_label = pygame.font.SysFont("consolas", 18)
+    title_font = pygame.font.SysFont("consolas", 26, bold=True)
+    info_font = pygame.font.SysFont("consolas", 18)
+
+    W, H = screen.get_width(), screen.get_height()
+
+    def text_width(text):
+        return font_label.render(text, True, (0, 0, 0)).get_width()
+
+    # =========================
+    # Boucle principale
+    # =========================
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+
+                if event.key in (pygame.K_RETURN, pygame.K_ESCAPE):
+                    running = False
+
+                elif event.key == pygame.K_n:
+                    index = min(index + 1, total - 1)
+
+                elif event.key == pygame.K_p:
+                    index = max(index - 1, 0)
+
+                elif event.key == pygame.K_l:
+                    index = total - 1
+
+                elif event.key == pygame.K_LEFT:
+                    x_offset += 30
+                elif event.key == pygame.K_RIGHT:
+                    x_offset -= 30
+                elif event.key == pygame.K_UP:
+                    y_offset += 30
+                elif event.key == pygame.K_DOWN:
+                    y_offset -= 30
+
+        # =========================
+        # Données de l’étape
+        # =========================
+        step = steps[index]
+
+        x = step["x"]
+        offre = step["offre"]
+        demande = step["demande"]
+        pen_l = step.get("pen_l")
+        pen_c = step.get("pen_c")
+        choix = step.get("choix")
+
+        n = len(x)
+        m = len(x[0])
+
+        # =========================
+        # Cadrage adaptatif (IDENTIQUE logique afficher)
+        # =========================
+        margin_left = 40
+        margin_top = 120
+        margin_right = 40
+        margin_bottom = 60
+
+        label_col_w = max(
+            text_width("Commande") + 20,
+            text_width(f"P{n}") + 20,
+            70
+        )
+
+        prov_col_w = max(
+            text_width("Provision") + 20,
+            text_width(str(max(offre))) + 20,
+            80
+        )
+
+        delta_col_w = max(
+            text_width(f"Δ{index+1} ligne") + 20,
+            80
+        )
+
+        remaining_w = (
+            W - margin_left - margin_right
+            - label_col_w - prov_col_w - delta_col_w
+        )
+
+        cell_w = max(60, min(remaining_w // m, 120))
+
+        total_rows = n + 3
+        remaining_h = H - margin_top - margin_bottom
+        cell_h = max(40, min(remaining_h // total_rows, 70))
+
+        # =========================
+        # Affichage
+        # =========================
+        screen.fill((15, 15, 30))
+
+        x0 = margin_left + x_offset
+        y0 = margin_top + y_offset
+
+        # ---------- Titre ----------
+        screen.blit(
+            title_font.render(
+                f"Balas-Hammer — Étape {index+1}/{total}",
+                True,
+                (255, 255, 0)
+            ),
+            (x0, y0 - 60)
+        )
+
+        # ---------- Grille ----------
+        for i in range(n + 3):
+            for j in range(m + 3):
+
+                if j == 0:
+                    cw = label_col_w
+                    x_pos = x0
+                elif j == m + 1:
+                    cw = prov_col_w
+                    x_pos = x0 + label_col_w + m * cell_w
+                elif j == m + 2:
+                    cw = delta_col_w
+                    x_pos = x0 + label_col_w + m * cell_w + prov_col_w
+                else:
+                    cw = cell_w
+                    x_pos = x0 + label_col_w + (j - 1) * cell_w
+
+                y_pos = y0 + i * cell_h
+
+                pygame.draw.rect(
+                    screen, (180, 180, 180),
+                    (x_pos, y_pos, cw, cell_h), 1
+                )
+
+                text = None
+                color = (255, 255, 255)
+
+                # ---------- En-têtes ----------
+                if i == 0 and 1 <= j <= m:
+                    text = f"C{j}"
+                    color = (200, 200, 255)
+
+                elif j == 0 and 1 <= i <= n:
+                    text = f"P{i}"
+                    color = (200, 200, 255)
+
+                elif i == 0 and j == m + 1:
+                    text = "Provision"
+                    color = (200, 200, 255)
+
+                elif i == 0 and j == m + 2:
+                    text = f"Δ{index+1} ligne"
+                    color = (255, 140, 140)
+
+                elif i == n + 1 and j == 0:
+                    text = "Commande"
+                    color = (200, 200, 255)
+
+                elif i == n + 2 and j == 0:
+                    text = f"Δ{index+1} col"
+                    color = (255, 140, 140)
+
+                # ---------- Provisions ----------
+                elif 1 <= i <= n and j == m + 1:
+                    text = str(offre[i - 1])
+
+                # ---------- Commandes ----------
+                elif i == n + 1 and 1 <= j <= m:
+                    text = str(demande[j - 1])
+
+                elif i == n + 1 and j == m + 1:
+                    text = str(sum(demande))
+
+                # ---------- Δ lignes ----------
+                elif 1 <= i <= n and j == m + 2 and pen_l:
+                    if pen_l[i - 1] >= 0:
+                        text = str(pen_l[i - 1])
+                        color = (255, 120, 120)
+
+                # ---------- Δ colonnes ----------
+                elif i == n + 2 and 1 <= j <= m and pen_c:
+                    if pen_c[j - 1] >= 0:
+                        text = str(pen_c[j - 1])
+                        color = (255, 120, 120)
+
+                # ---------- Case transport ----------
+                elif 1 <= i <= n and 1 <= j <= m:
+                    ci, cj = i - 1, j - 1
+
+                    if choix == (ci, cj):
+                        pygame.draw.rect(
+                            screen, (255, 80, 80),
+                            (x_pos + 2, y_pos + 2, cw - 4, cell_h - 4), 2
+                        )
+
+                    screen.blit(
+                        font_cost.render(str(couts[ci][cj]), True, (150, 150, 255)),
+                        (x_pos + 5, y_pos + 4)
+                    )
+
+                    val = x[ci][cj]
+
+                    # couleur selon valeur
+                    if val == 0:
+                        color_val = (120, 180, 255)  #
+                    else:
+                        color_val = (255, 120, 120)  #
+
+                    surf_val = font_value.render(str(val), True, color_val)
+                    screen.blit(
+                        surf_val,
+                        (
+                            x_pos + cw // 2 - surf_val.get_width() // 2,
+                            y_pos + cell_h - surf_val.get_height() - 4
+                        )
+                    )
+
+                if text is not None:
+                    surf = font_label.render(text, True, color)
+                    screen.blit(
+                        surf,
+                        (x_pos + cw//2 - surf.get_width()//2,
+                         y_pos + cell_h//2 - surf.get_height()//2)
+                    )
+
+        # ---------- Aide ----------
+        screen.blit(
+            info_font.render(
+                "N/P : navigation | L : fin | Flèches : déplacer | ENTER / ESC : retour",
+                True, (160, 160, 160)
+            ),
+            (20, H - 30)
+        )
+
+        pygame.display.flip()
+        clock.tick(60)
+
+
+def balas_hammer_steps(couts, offre, demande):
+    """
+    Génère les états successifs de la méthode de Balas-Hammer.
+    Chaque état correspond à UNE itération logique.
+    """
+
+    couts = deepcopy(couts)
+    offre = offre[:]
+    demande = demande[:]
+
+    n = len(offre)
+    m = len(demande)
+
+    x = [[0 for _ in range(m)] for _ in range(n)]
+    lignes_actives = [True] * n
+    colonnes_actives = [True] * m
+
+    steps = []
+
+    def calculer_penalites():
+        pen_l = [-1] * n
+        pen_c = [-1] * m
+
+        for i in range(n):
+            if not lignes_actives[i] or offre[i] == 0:
+                continue
+            costs = [couts[i][j] for j in range(m)
+                     if colonnes_actives[j] and demande[j] > 0]
+            if len(costs) >= 2:
+                costs.sort()
+                pen_l[i] = costs[1] - costs[0]
+            elif len(costs) == 1:
+                pen_l[i] = costs[0]
+
+        for j in range(m):
+            if not colonnes_actives[j] or demande[j] == 0:
+                continue
+            costs = [couts[i][j] for i in range(n)
+                     if lignes_actives[i] and offre[i] > 0]
+            if len(costs) >= 2:
+                costs.sort()
+                pen_c[j] = costs[1] - costs[0]
+            elif len(costs) == 1:
+                pen_c[j] = costs[0]
+
+        return pen_l, pen_c
+
+    iteration = 1
+
+    while any(offre) and any(demande):
+        pen_l, pen_c = calculer_penalites()
+        max_l = max(pen_l)
+        max_c = max(pen_c)
+        delta_max = max(max_l, max_c)
+
+        if delta_max < 0:
+            break
+
+        choisir_ligne = max_l >= max_c
+
+        if choisir_ligne:
+            idx_pen_ligne = pen_l.index(max_l)
+            i = idx_pen_ligne
+            j = min(
+                (j for j in range(m) if colonnes_actives[j] and demande[j] > 0),
+                key=lambda j: couts[i][j]
+            )
+            idx_pen_col = None
+        else:
+            idx_pen_col = pen_c.index(max_c)
+            j = idx_pen_col
+            i = min(
+                (i for i in range(n) if lignes_actives[i] and offre[i] > 0),
+                key=lambda i: couts[i][j]
+            )
+            idx_pen_ligne = None
+
+        q = min(offre[i], demande[j])
+
+        #  Sauvegarde ÉTAT AVANT allocation
+        steps.append({
+            "iteration": iteration,
+            "x": deepcopy(x),
+            "offre": offre[:],
+            "demande": demande[:],
+            "pen_l": pen_l[:],
+            "pen_c": pen_c[:],
+            "i_choisie": i,
+            "j_choisie": j,
+            "idx_pen_ligne": idx_pen_ligne,
+            "idx_pen_col": idx_pen_col,
+            "delta_max": delta_max,
+            "choisir_ligne": choisir_ligne
+        })
+
+        # Allocation
+        x[i][j] += q
+        offre[i] -= q
+        demande[j] -= q
+
+        if offre[i] == 0:
+            lignes_actives[i] = False
+        if demande[j] == 0:
+            colonnes_actives[j] = False
+
+        iteration += 1
+
+    # 🔹 État final
+    steps.append({
+        "iteration": iteration,
+        "x": deepcopy(x),
+        "offre": offre[:],
+        "demande": demande[:],
+        "pen_l": None,
+        "pen_c": None,
+        "i_choisie": None,
+        "j_choisie": None,
+        "idx_pen_ligne": None,
+        "idx_pen_col": None,
+        "delta_max": None,
+        "choisir_ligne": None
+    })
+
+    return steps
+
+
+def afficher_console_pygame(screen, texte, titre="Sortie console"):
+    """
+    Affiche un texte multi-lignes (console) dans Pygame avec scroll.
+    """
+    font = pygame.font.SysFont("consolas", 18)
+    title_font = pygame.font.SysFont("consolas", 26, bold=True)
+
+    lignes = texte.split("\n")
+
+    x_offset = 0
+    y_offset = 0
+
+    clock = pygame.time.Clock()
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_RETURN, pygame.K_ESCAPE):
+                    running = False
+                elif event.key == pygame.K_DOWN:
+                    y_offset -= 25
+                elif event.key == pygame.K_UP:
+                    y_offset = min(y_offset + 25, 0)
+
+        screen.fill((15, 15, 30))
+
+        # Titre
+        screen.blit(
+            title_font.render(titre, True, (255, 255, 0)),
+            (40, 20)
+        )
+
+        y = 80 + y_offset
+        for ligne in lignes:
+            surf = font.render(ligne, True, (200, 200, 200))
+            screen.blit(surf, (40, y))
+            y += 22
+
+        # Aide
+        help_font = pygame.font.SysFont("consolas", 18)
+        screen.blit(
+            help_font.render("↑ / ↓ : défiler | ENTER / ESC : retour", True, (150, 150, 150)),
+            (40, screen.get_height() - 30)
+        )
+
+        pygame.display.flip()
+        clock.tick(60)
+
+def dessiner_graphe_basis_pygame(screen, basis, titre="Graphe de la base"):
+    """
+    Dessine le graphe biparti correspondant à la matrice basis en Pygame.
+    Pi à gauche, Cj à droite.
+    Une arête est tracée si basis[i][j] == True.
+    """
+
+    n = len(basis)
+    m = len(basis[0])
+
+    W, H = screen.get_width(), screen.get_height()
+
+    font = pygame.font.SysFont("consolas", 20)
+    title_font = pygame.font.SysFont("consolas", 26, bold=True)
+
+    # ---------------------------
+    # Positions des nœuds
+    # ---------------------------
+    margin_x = 120
+    margin_y = 120
+
+    left_x = margin_x
+    right_x = W - margin_x
+
+    # Espacement vertical
+    spacing_P = (H - 2 * margin_y) // max(n, 1)
+    spacing_C = (H - 2 * margin_y) // max(m, 1)
+
+    pos_P = {}
+    pos_C = {}
+
+    for i in range(n):
+        pos_P[i] = (left_x, margin_y + i * spacing_P)
+
+    for j in range(m):
+        pos_C[j] = (right_x, margin_y + j * spacing_C)
+
+    clock = pygame.time.Clock()
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_RETURN, pygame.K_ESCAPE):
+                    running = False
+
+        screen.fill((15, 15, 30))
+
+        # ---------------------------
+        # Titre
+        # ---------------------------
+        screen.blit(
+            title_font.render(titre, True, (255, 255, 0)),
+            (W // 2 - 200, 40)
+        )
+
+        # ---------------------------
+        # Arêtes (avant les nœuds)
+        # ---------------------------
+        for i in range(n):
+            for j in range(m):
+                if basis[i][j]:
+                    pygame.draw.line(
+                        screen,
+                        (200, 200, 200),
+                        pos_P[i],
+                        pos_C[j],
+                        2
+                    )
+
+        # ---------------------------
+        # Nœuds Pi
+        # ---------------------------
+        for i, (x, y) in pos_P.items():
+            pygame.draw.circle(screen, (80, 160, 255), (x, y), 22)
+            txt = font.render(f"P{i+1}", True, (0, 0, 0))
+            screen.blit(
+                txt,
+                (x - txt.get_width() // 2, y - txt.get_height() // 2)
+            )
+
+        # ---------------------------
+        # Nœuds Cj
+        # ---------------------------
+        for j, (x, y) in pos_C.items():
+            pygame.draw.circle(screen, (160, 220, 160), (x, y), 22)
+            txt = font.render(f"C{j+1}", True, (0, 0, 0))
+            screen.blit(
+                txt,
+                (x - txt.get_width() // 2, y - txt.get_height() // 2)
+            )
+
+        # ---------------------------
+        # Aide
+        # ---------------------------
+        help_font = pygame.font.SysFont("consolas", 18)
+        screen.blit(
+            help_font.render("ENTER / ESC : retour", True, (150, 150, 150)),
+            (40, H - 30)
+        )
+
+        pygame.display.flip()
+        clock.tick(60)
+
+
+def viewer_fonction_list(screen, couts, provisions, commandes, val_init, basis_init, val_opt, basis_opt,
+                        steps, texte_balas, texte_marchepied, texte_cout, nb):
+    """
+    Viewer unique : O/K pour changer d'écran.
+    ENTER/ESC : retour au menu.
+    """
+
+    import pygame, sys
+
+    # Liste des "pages" (nom, fonction à afficher)
+    pages = [
+        ("Balas-Hammer — étapes", lambda: balas_hammer_pygame(screen, couts, steps)),  # N/P/L interne
+        (f"Matrice {nb} (solution BH)", lambda: afficher_matrice_transport_pygame(screen, couts, val_init, provisions, commandes,
+                                                                                 titre=f"Matrice {nb}")),
+        ("Graphe base BH", lambda: dessiner_graphe_basis_pygame(screen, basis_init, titre="Graphe biparti de la base (BH)")),
+        ("Console BH (capture)", lambda: afficher_console_pygame(screen, texte_balas, titre=f"Balas-Hammer — Matrice {nb}")),
+        ("Console Marche-Pied (capture)", lambda: afficher_console_pygame(screen, texte_marchepied, titre=f"Marche-Pied — Matrice {nb}")),
+        ("Graphe base optimale", lambda: dessiner_graphe_basis_pygame(screen, basis_opt, titre="Graphe biparti de la base (OPT)")),
+        ("Console coût optimal (capture)", lambda: afficher_console_pygame(screen, texte_cout, titre=f"Coût optimal — Matrice {nb}")),
+    ]
+
+    page = 0
+    clock = pygame.time.Clock()
+    running = True
+
+    info_font = pygame.font.SysFont("consolas", 18)
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_RETURN, pygame.K_ESCAPE):
+                    running = False
+
+                # K = page suivante, O = page précédente (comme tu as demandé)
+                elif event.key == pygame.K_k:
+                    page = (page + 1) % len(pages)
+                elif event.key == pygame.K_o:
+                    page = (page - 1) % len(pages)
+
+        # ⚠️ Important :
+        # On dessine une page "plein écran" en appelant ta fonction d'affichage.
+        # MAIS si ta fonction contient sa propre boucle (while running), elle va bloquer ici.
+        #
+        # Donc : pour que ce viewer marche, il faut que tes fonctions d'affichage
+        # NE FASSENT PAS de boucle interne, ou qu'elles aient une version "draw_once".
+        #
+        # Si tu veux garder tes boucles internes, alors O/K doit être géré DANS chaque écran.
+
+        screen.fill((15, 15, 30))
+
+        # Petit bandeau en haut
+        title = f"[O/K] Page {page+1}/{len(pages)} : {pages[page][0]}  |  ENTER/ESC: retour"
+        screen.blit(info_font.render(title, True, (200, 200, 200)), (20, 20))
+        pygame.display.flip()
+
+        # Appel de la page choisie
+        pages[page][1]()
+
+        clock.tick(60)

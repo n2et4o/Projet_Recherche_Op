@@ -1,37 +1,41 @@
-def nord_ouest(provisions, commandes):
+def nord_ouest(provision, commande):
     """
-    Implémente la méthode du Nord-Ouest pour le problème de transport.
-    
-    :param provisions: liste des quantités disponibles chez chaque fournisseur (Pi)
-    :param commandes: liste des quantités demandées par chaque client (Cj)
-    :return: matrice de transport (allocation des quantités)
+    Implémente la méthode du Nord-Ouest pour le problème de transport
+    sans modifier les listes d'entrée.
+
+    Retourne :
+        - valeurs : matrice des quantités allouées
+        - basis   : matrice bool indiquant les cases de base
     """
-    n = len(provisions)   # nombre de fournisseurs
-    m = len(commandes)    # nombre de clients
-    
-    # Initialisation de la matrice de transport avec des zéros
-    allocation = [[0 for _ in range(m)] for _ in range(n)]
-    
-    i, j = 0, 0  # indices de départ (coin nord-ouest)
-    
-    # Tant qu'il reste des provisions et des commandes
+
+    # Copies locales pour éviter de modifier les originaux
+    provision_local = provision.copy()
+    commande_local = commande.copy()
+
+    n = len(provision_local)
+    m = len(commande_local)
+
+    # Matrice d'allocations
+    valeurs = [[0 for _ in range(m)] for _ in range(n)]
+
+    i, j = 0, 0
+
     while i < n and j < m:
-        # On affecte la quantité minimale possible
-        q = min(provisions[i], commandes[j])
-        allocation[i][j] = q
-        
-        # Mise à jour des provisions et commandes restantes
-        provisions[i] -= q
-        commandes[j] -= q
-        
-        # Si le fournisseur i est épuisé, on passe au suivant
-        if provisions[i] == 0:
+        q = min(provision_local[i], commande_local[j])
+        valeurs[i][j] = q
+
+        provision_local[i] -= q
+        commande_local[j] -= q
+
+        if provision_local[i] == 0:
             i += 1
-        # Si le client j est satisfait, on passe au suivant
-        if commandes[j] == 0:
+        if commande_local[j] == 0:
             j += 1
-    
-    return allocation
+
+    # Construction de la basis comme Balas-Hammer
+    basis = [[(valeurs[i][j] > 0) for j in range(m)] for i in range(n)]
+
+    return valeurs, basis
 
 
 # # Exemple d'utilisation

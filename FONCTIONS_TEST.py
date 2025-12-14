@@ -483,7 +483,7 @@ def maximize_on_cycle(x, cycle):
             op_symb = '-'
             s_col = RED
         print(
-            f"  x[{i},{j}] {color(op_symb, s_col)}= {theta} : {old} → {x[i][j]}"
+            f"  x[{i},{j}] {color(op_symb, s_col)}= {theta} : {old} -> {x[i][j]}"
         )
 
     return x
@@ -541,10 +541,10 @@ def repair_degenerate_base(x, basis, cost, graph, visited):
     added = None
     if best_i is not None:
         print(
-            "\n→ On cherche une case (i,j) de coût minimal reliant ces composantes."
+            "\n-> On cherche une case (i,j) de coût minimal reliant ces composantes."
         )
         print(
-            f"→ On ajoute la case basique ({best_i}, {best_j}) "
+            f"-> On ajoute la case basique ({best_i}, {best_j}) "
             f"de coût {cost[best_i][best_j]} pour réparer la base."
         )
         basis[best_i][best_j] = True
@@ -592,11 +592,11 @@ def marche_pied(x, basis, cost):
             print(color("Cycle détecté dans la base (dégénérescence possible).", YELLOW))
 
         if not connexe or not acyclique:
-            print(color("⚠️  Base dégénérée : tentative de réparation...", YELLOW))
+            print(color("  Base dégénérée : tentative de réparation...", YELLOW))
             basis, added = repair_degenerate_base(x, basis, cost, graph, visited)
             if added is not None:
                 print(
-                    "→ La base est réparée en ajoutant la case "
+                    "-> La base est réparée en ajoutant la case "
                     f"{color(added, BOLD, CYAN)}."
                 )
             afficher_basis(basis)
@@ -616,7 +616,7 @@ def marche_pied(x, basis, cost):
         afficher_delta(delta, basis, entering)
 
         if entering is None:
-            print("\n✅ Solution optimale atteinte !")
+            print("\n Solution optimale atteinte !")
             afficher_quantites(x)
             return x, basis
 
@@ -749,7 +749,7 @@ def calculer_cout_transport(allocations, couts, afficher=False):
 
     if afficher:
         print("\n===== COÛT TOTAL =====")
-        print(f"💰 Coût = {cout_total}")
+        print(f" Coût = {cout_total}")
 
     return cout_total
 
@@ -879,7 +879,7 @@ def methode_balas_hammer(couts, offre, demande, verbose=True):
                 delta_max=max_pg, choisir_ligne=choisir_ligne
             )
             print(
-                f"\n→ Allocation possible dans la case ({i_choisie}, {j_choisie}) : "
+                f"\n-> Allocation possible dans la case ({i_choisie}, {j_choisie}) : "
                 f"min(offre, demande) = {quantite}"
             )
 
@@ -919,3 +919,52 @@ def charger_fichier(path):
 
     commandes = list(map(int, lignes[line_index].split()))
     return couts, provisions, commandes
+
+def nord_ouest(provision, commande):
+    """
+    Implémente la méthode du Nord-Ouest pour le problème de transport
+    sans modifier les listes d'entrée.
+
+    Retourne :
+        - valeurs : matrice des quantités allouées
+        - basis   : matrice bool indiquant les cases de base
+    """
+
+    # Copies locales pour éviter de modifier les originaux
+    provision_local = provision.copy()
+    commande_local = commande.copy()
+
+    n = len(provision_local)
+    m = len(commande_local)
+
+    # Matrice d'allocations
+    valeurs = [[0 for _ in range(m)] for _ in range(n)]
+
+    i, j = 0, 0
+
+    while i < n and j < m:
+        q = min(provision_local[i], commande_local[j])
+        valeurs[i][j] = q
+
+        provision_local[i] -= q
+        commande_local[j] -= q
+
+        if provision_local[i] == 0:
+            i += 1
+        if commande_local[j] == 0:
+            j += 1
+
+    # Construction de la basis comme Balas-Hammer
+    basis = [[(valeurs[i][j] > 0) for j in range(m)] for i in range(n)]
+
+    return valeurs, basis
+
+
+# # Exemple d'utilisation
+# provisions = [100, 100]       # Pi
+# commandes = [100, 100]        # Cj
+
+# solution = nord_ouest(provisions[:], commandes[:])  # [:] pour éviter de modifier les listes originales
+# print("Solution Nord-Ouest :")
+# for ligne in solution:
+#     print(ligne)
