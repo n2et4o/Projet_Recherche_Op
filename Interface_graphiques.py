@@ -1243,41 +1243,14 @@ def marche_pied_pygame(screen, x_init, basis_init, cost):
         basis_after = None
 
         if entering is not None:
-          cycle = build_cycle_for_entering_arc(x, basis, entering)
+            cycle = build_cycle_for_entering_arc(x, basis, entering)
 
-theta = None
-x_after = None
-basis_after = None
-
-if cycle is not None:
-    th = 10**18
-    for (i, j), sign in cycle:
-        if sign == '-':
-            th = min(th, x[i][j])
-    theta = th
-
-    # simuler la maj
-    x2 = deepcopy(x)
-    for (i, j), sign in cycle:
-        if sign == '+':
-            x2[i][j] += theta
-        else:
-            x2[i][j] -= theta
-
-    b2 = deepcopy(basis)
-    ei, ej = entering
-    b2[ei][ej] = True
-
-    x_after = x2
-    basis_after = b2
-
-    # appliquer réellement
-    x = x2
-    basis = b2
-else:
-    # 🔥 arête entrante ignorée proprement
-    entering = None
-
+            # theta = min sur les '-' du cycle
+            th = 10**18
+            for (i, j), sign in cycle:
+                if sign == '-':
+                    th = min(th, x[i][j])
+            theta = th
 
             # simuler la maj (sans casser x avant)
             x2 = deepcopy(x)
@@ -1734,64 +1707,46 @@ else:
 
 
 
-          elif step == 4:
-    y = CONTENT_TOP + y_offset
+            elif step == 4 and st["cycle"]:
 
-    # ----- CAS AUCUN CYCLE -----
-    if st["cycle"] is None:
-        draw_text(
-            40, y,
-            "⚠ Aucun cycle valide trouvé pour cette arête entrante.",
-            (255, 160, 80),
-            f=font
-        )
+                y = CONTENT_TOP + y_offset
 
-        y += 30
+                draw_text(40, y, f"Cycle (θ = {st['theta']}) :", (255, 255, 0))
 
-        draw_text(
-            40, y,
-            "L'arête entrante est ignorée pour préserver la validité de la base.",
-            (200, 200, 200),
-            f=font_small
-        )
+                y += 20
 
-    # ----- CAS CYCLE VALIDE -----
-    else:
-        draw_text(
-            40, y,
-            f"Cycle (θ = {st['theta']}) :",
-            (255, 255, 0),
-            f=font
-        )
-        y += 20
+                for (i, j), sgn in st["cycle"]:
+                    draw_text(40, y, f"({i},{j}) {sgn}", (80, 255, 80) if sgn == '+' else (255, 80, 80))
 
-        for (i, j), sgn in st["cycle"]:
-            draw_text(
-                40, y,
-                f"({i},{j}) {sgn}",
-                (80, 255, 80) if sgn == '+' else (255, 80, 80),
-                f=font_small
-            )
-            y += 18
+                    y += 18
 
-        y += 10
+                y += 10
 
-        draw_transport_matrix(
-            st["x_before"], cost,
-            st["prov_before"], st["cmd_before"],
-            380, y,
-            title="Transport (avant) + cycle"
-        )
+                draw_transport_matrix(
 
-        y += 260
+                    st["x_before"], cost,
 
-        draw_transport_matrix(
-            st["x_after"], cost,
-            st["prov_after"], st["cmd_after"],
-            380, y,
-            title="Transport (après)"
-        )
+                    st["prov_before"], st["cmd_before"],
 
+                    380, y,
+
+                    title="Transport (avant) + cycle"
+
+                )
+
+                y += 260
+
+                draw_transport_matrix(
+
+                    st["x_after"], cost,
+
+                    st["prov_after"], st["cmd_after"],
+
+                    380, y,
+
+                    title="Transport (après)"
+
+                )
 
             # =========================
             # AIDE
