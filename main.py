@@ -31,7 +31,7 @@ while running:
             state.mp_data[2],  # couts
         )
 
-        # 🔁 RETOUR AU MENU MATRICE
+        # RETOUR AU MENU MATRICE
         state.mode = "MENU"
         state.selected = 0
         state.mp_data = None
@@ -85,6 +85,9 @@ while running:
                             couts, provisions, commandes = charger_fichier(fichier)
 
                             valeurs = [["" for _ in row] for row in couts]
+                            trace_logs = []
+                            trace_logs.append("===== ETAPE 1 : Solution initiale =====")
+                            trace_logs.append(afficher_matrice_text(couts, valeurs, provisions, commandes))
 
                             afficher_matrice_transport_pygame(
                                 screen, couts, valeurs,
@@ -170,6 +173,22 @@ while running:
                                 titre="Nord-Ouest"
                             )
 
+                            state.mp_data = (valeurs, basis, couts)
+                            state.mode = "MARCHE_PIED"
+
+                            executer_transport_complet(
+                                screen=screen,
+                                methode="no",
+                                couts=couts,
+                                provisions=provisions,
+                                commandes=commandes,
+                                numero_probleme=state.chosen_matrice,
+                                groupe="NEW-1",
+                                equipe="4"
+                            )
+
+
+
                         elif state.selected == 2:
                             # ============================
                             # BALAS → MARCHE-PIED
@@ -183,10 +202,19 @@ while running:
                                 provisions, commandes,
                                 titre="Solution initiale Balas-Hammer"
                             )
-
-                            # 🔴 DONNÉES TRANSMISES AU MODE MARCHE-PIED
                             state.mp_data = (val_init, basis_init, couts)
                             state.mode = "MARCHE_PIED"
+
+                            executer_transport_complet(
+                                screen=screen,
+                                methode="bh",
+                                couts=couts,
+                                provisions=provisions,
+                                commandes=commandes,
+                                numero_probleme=state.chosen_matrice,
+                                groupe="NEW-1",
+                                equipe="4"
+                            )
 
                         elif state.selected == 3:
                             state.showing_help = True

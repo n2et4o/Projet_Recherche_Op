@@ -1000,69 +1000,182 @@ def dessiner_graphe_basis_pygame(screen, basis, titre="Graphe de la base"):
         clock.tick(60)
 
 
-def viewer_fonction_list(screen, couts, provisions, commandes, val_init, basis_init, val_opt, basis_opt,
-                        steps, texte_balas, texte_marchepied, texte_cout, nb):
+def trace_execution_transport(
+    groupe,
+    equipe,
+    numero_probleme,
+    methode,              # "no" ou "bh"
+    couts,
+    provisions,
+    commandes,
+    trace_logs            # liste de chaînes déjà produites (console)
+):
     """
-    Viewer unique : O/K pour changer d'écran.
-    ENTER/ESC : retour au menu.
+    Écrit la trace complète d'un problème de transport dans un fichier texte.
     """
 
-    import pygame, sys
+    # ========= 1) Dossier =========
+    dossier = "Traces_Transport"
+    os.makedirs(dossier, exist_ok=True)
 
-    # Liste des "pages" (nom, fonction à afficher)
-    pages = [
-        ("Balas-Hammer — étapes", lambda: balas_hammer_pygame(screen, couts, steps)),  # N/P/L interne
-        (f"Matrice {nb} (solution BH)", lambda: afficher_matrice_transport_pygame(screen, couts, val_init, provisions, commandes,
-                                                                                 titre=f"Matrice {nb}")),
-        ("Graphe base BH", lambda: dessiner_graphe_basis_pygame(screen, basis_init, titre="Graphe biparti de la base (BH)")),
-        ("Console BH (capture)", lambda: afficher_console_pygame(screen, texte_balas, titre=f"Balas-Hammer — Matrice {nb}")),
-        ("Console Marche-Pied (capture)", lambda: afficher_console_pygame(screen, texte_marchepied, titre=f"Marche-Pied — Matrice {nb}")),
-        ("Graphe base optimale", lambda: dessiner_graphe_basis_pygame(screen, basis_opt, titre="Graphe biparti de la base (OPT)")),
-        ("Console coût optimal (capture)", lambda: afficher_console_pygame(screen, texte_cout, titre=f"Coût optimal — Matrice {nb}")),
-    ]
+    # ========= 2) Nom du fichier =========
+    filename = f"{groupe}-{equipe}-trace{numero_probleme}-{methode}.txt"
+    filepath = os.path.join(dossier, filename)
 
-    page = 0
-    clock = pygame.time.Clock()
-    running = True
+    # ========= 3) Construction du texte =========
+    with open(filepath, "a", encoding="utf-8") as f:
 
-    info_font = pygame.font.SysFont("consolas", 18)
+        # --- EN-TÊTE ---
+        f.write("===== TRACE D'EXECUTION - PROBLEME DE TRANSPORT =====\n\n")
+        f.write(f"Groupe        : {groupe}\n")
+        f.write(f"Equipe        : {equipe}\n")
+        f.write(f"Problème n°   : {numero_probleme}\n")
+        f.write(f"Méthode       : {methode.upper()}\n\n")
 
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+        # --- DONNÉES INITIALES ---
+        f.write("===== DONNEES INITIALES =====\n\n")
+        f.write("Matrice des coûts :\n")
+        f.write(afficher_matrice_text(couts) + "\n")
 
-            if event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_RETURN, pygame.K_ESCAPE):
-                    running = False
+        f.write("Provisions :\n")
+        f.write(str(provisions) + "\n\n")
 
-                # K = page suivante, O = page précédente (comme tu as demandé)
-                elif event.key == pygame.K_k:
-                    page = (page + 1) % len(pages)
-                elif event.key == pygame.K_o:
-                    page = (page - 1) % len(pages)
+        f.write("Commandes :\n")
+        f.write(str(commandes) + "\n\n")
 
-        # ⚠️ Important :
-        # On dessine une page "plein écran" en appelant ta fonction d'affichage.
-        # MAIS si ta fonction contient sa propre boucle (while running), elle va bloquer ici.
-        #
-        # Donc : pour que ce viewer marche, il faut que tes fonctions d'affichage
-        # NE FASSENT PAS de boucle interne, ou qu'elles aient une version "draw_once".
-        #
-        # Si tu veux garder tes boucles internes, alors O/K doit être géré DANS chaque écran.
+        # --- TRACE DE LA RESOLUTION ---
+        f.write("===== RESOLUTION =====\n\n")
 
-        screen.fill((15, 15, 30))
+        for bloc in trace_logs:
+            f.write(bloc + "\n")
+            f.write("-" * 60 + "\n")
 
-        # Petit bandeau en haut
-        title = f"[O/K] Page {page+1}/{len(pages)} : {pages[page][0]}  |  ENTER/ESC: retour"
-        screen.blit(info_font.render(title, True, (200, 200, 200)), (20, 20))
-        pygame.display.flip()
+    print(f"Trace enregistrée dans : {filepath}")
 
-        # Appel de la page choisie
-        pages[page][1]()
+def afficher_matrice_text(couts, valeurs=None, provisions=None, commandes=None):
+    import io
+    buffer = io.StringIO()
 
-        clock.tick(60)
+    n = len(couts)
+    m = len(couts[0])
+
+    contenus = []
+    contenus += [f"C{j+1}" for j in range(m)]
+    if provisions is not None:
+        contenus.append("Provisions")
+
+    contenus += [f"P{i+1}" for i in range(n)]
+    for row in couts:
+        contenus += [str(c) for c in row]
+
+    max_len = max(len(x) for x in contenus)
+    col = max_len + 2
+
+    def ligne_sep():
+        return "+" + "+".join("-" * col for _ in range(m + (1 if provisions else 0) + 1)) + "+"
+
+    def write_row(cells):
+        buffer.write("|" + "|".join(str(c).center(col) for c in cells) + "|\n")
+
+    buffer.write(ligne_sep() + "\n")
+    header = [""] + [f"C{j+1}" for j in range(m)]
+    if provisions:
+        header.append("Prov")
+    write_row(header)
+    buffer.write(ligne_sep() + "\n")
+
+    for i in range(n):
+        row = [f"P{i+1}"] + [str(couts[i][j]) for j in range(m)]
+        if provisions:
+            row.append(str(provisions[i]))
+        write_row(row)
+
+        if valeurs:
+            write_row([""] + [str(valeurs[i][j]) for j in range(m)] + ([""] if provisions else []))
+
+        buffer.write(ligne_sep() + "\n")
+
+    if commandes:
+        write_row(["Cmd"] + [str(c) for c in commandes] + [str(sum(commandes))])
+
+    return buffer.getvalue()
+
+def executer_transport_complet(
+    screen,
+    methode,          # "no" ou "bh"
+    couts,
+    provisions,
+    commandes,
+    numero_probleme,
+    groupe,
+    equipe
+):
+    """
+    Exécute :
+    - Nord-Ouest ou Balas
+    - Marche-pied
+    - Coût de transport
+    - Traces texte
+    - Lancement visualisation Pygame
+    """
+
+    trace_logs = []
+
+    # =========================
+    # SOLUTION INITIALE
+    # =========================
+    if methode == "no":
+        valeurs, basis = nord_ouest(provisions, commandes)
+        texte_no = print_f(nord_ouest, provisions, commandes)
+        trace_logs.append("===== NORD-OUEST =====\n" + texte_no)
+
+    elif methode == "bh":
+        valeurs, basis = methode_balas_hammer(couts, provisions, commandes)
+        texte_bh = print_f(methode_balas_hammer, couts, provisions, commandes)
+        trace_logs.append("===== BALAS-HAMMER =====\n" + texte_bh)
+
+    # =========================
+    # MARCHE-PIED (CALCUL)
+    # =========================
+    texte_mp = print_f(marche_pied, valeurs, basis, couts)
+    trace_logs.append("===== MARCHE-PIED =====\n" + texte_mp)
+
+    val_opt, basis_opt = marche_pied(valeurs, basis, couts)
+
+    # =========================
+    # COÛT DE TRANSPORT
+    # =========================
+    texte_cout = print_f(
+        calculer_cout_transport,
+        val_opt,
+        couts,
+        True
+    )
+    trace_logs.append("===== COUT OPTIMAL =====\n" + texte_cout)
+    cout_total = calculer_cout_transport(
+        val_opt,
+        couts,
+        afficher=False
+    )
+
+    # =========================
+    # TRACE FICHIER
+    # =========================
+    trace_execution_transport(
+        groupe=groupe,
+        equipe=equipe,
+        numero_probleme=numero_probleme,
+        methode=methode,
+        couts=couts,
+        provisions=provisions,
+        commandes=commandes,
+        trace_logs=trace_logs
+    )
+
+    # =========================
+    # AFFICHAGE CONSOLE PYGAME
+    # =========================
+
 
 
 def marche_pied_pygame(screen, x_init, basis_init, cost):
@@ -1205,17 +1318,27 @@ def marche_pied_pygame(screen, x_init, basis_init, cost):
         total = len(states)
         x_offset = 0
         y_offset = 0
-        origin_x = 40 + x_offset
-        origin_y = 80 + y_offset
+        y_offset = 0
+
+        MAX_SCROLL = 0
+        MIN_SCROLL = -1600  # ajuste si besoin
 
         clock = pygame.time.Clock()
         running = True
 
         font = pygame.font.SysFont("consolas", 16)
         font_small = pygame.font.SysFont("consolas", 14)
-        title_font = pygame.font.SysFont("consolas", 28, bold=True)
+        title_font = pygame.font.SysFont("consolas", 14, bold=True)
 
         W, H = screen.get_width(), screen.get_height()
+        # =========================
+        # LAYOUT FIXE
+        # =========================
+        GRAPH_TOP = 90  # début graphe
+        GRAPH_HEIGHT = 260  # hauteur max du graphe (FIXE)
+        GRAPH_BOTTOM = GRAPH_TOP + GRAPH_HEIGHT
+
+        CONTENT_TOP = GRAPH_BOTTOM + 20  # début zone scrollable
 
         # couleurs des arêtes ajoutées (une couleur par itération)
         COLORS = [
@@ -1412,13 +1535,10 @@ def marche_pied_pygame(screen, x_init, basis_init, cost):
                         step = 0
 
                     elif event.key == pygame.K_DOWN:
-                        y_offset -= 30
+                        y_offset = max(y_offset - 30, MIN_SCROLL)
+
                     elif event.key == pygame.K_UP:
-                        y_offset = min(y_offset + 30, 0)
-                    elif event.key == pygame.K_RIGHT:
-                        x_offset -= 30
-                    elif event.key == pygame.K_LEFT:
-                        x_offset = min(x_offset + 30, 0)
+                        y_offset = min(y_offset + 30, MAX_SCROLL)
 
                     #x0 = margin_left + x_offset
                     #y0 = margin_top + y_offset
@@ -1437,30 +1557,52 @@ def marche_pied_pygame(screen, x_init, basis_init, cost):
                 (40, 20)
             )
 
+            if index == total - 1:
+                val_opt, basis_opt = marche_pied(x_init, basis, cost)
+
+                cout_total = calculer_cout_transport(
+                    val_opt,
+                    cost,
+                    afficher=False
+                )
+                draw_text(
+                    40, 50,
+                    "Solution optimale atteinte",
+                    (120, 255, 120),
+                    f=font
+                )
+                draw_text(
+                    40, 75,
+                    f"Coût total optimal : {cout_total}",
+                    (255, 200, 80),
+                    f=font
+                )
+
             # =========================
             # ZONE GAUCHE: Graphe biparti
             # =========================
+            # =========================
+            # ZONE GRAPHE (FIXE)
+            # =========================
             basis_prev = st["basis_prev"]
-            basis_now = st["basis"] if st["basis"] is not None else basis_prev
             added = st["added"]
 
             n = len(basis_prev)
             m = len(basis_prev[0])
-
-
 
             graph_width = 420
             center_x = W // 2
             left_x = center_x - graph_width // 2
             right_x = center_x + graph_width // 2
 
-            top = 150
+            top = GRAPH_TOP
+            usable_h = GRAPH_HEIGHT - 40
 
-            spacing_P = max(40, (H - top - 260) // n)
-            spacing_C = max(40, (H - top - 260) // m)
+            spacing_P = max(30, usable_h // max(n, 1))
+            spacing_C = max(30, usable_h // max(m, 1))
 
-            pos_P = {i: (left_x, top + i * spacing_P) for i in range(n)}
-            pos_C = {j: (right_x, top + j * spacing_C) for j in range(m)}
+            pos_P = {i: (left_x, top + 20 + i * spacing_P) for i in range(n)}
+            pos_C = {j: (right_x, top + 20 + j * spacing_C) for j in range(m)}
 
             NODE_R = 14
 
@@ -1491,15 +1633,15 @@ def marche_pied_pygame(screen, x_init, basis_init, cost):
             # INFOS (toujours visibles)
             # =========================
             yinfo = 90
-            draw_text(40, yinfo, f"Connexe : {'OUI' if st['connexe'] else 'NON'}", (200, 200, 200));
+            draw_text(40, yinfo, f"Connexe : {'OUI' if st['connexe'] else 'NON'}", (200, 200, 200))
             yinfo += 22
-            draw_text(40, yinfo, f"Acyclique : {'OUI' if st['acyclique'] else 'NON'}", (200, 200, 200));
+            draw_text(40, yinfo, f"Acyclique : {'OUI' if st['acyclique'] else 'NON'}", (200, 200, 200))
             yinfo += 22
-            draw_text(40, yinfo, f"Arête entrante : {st['entering']}", (255, 140, 140));
+            draw_text(40, yinfo, f"Arête entrante : {st['entering']}", (255, 140, 140))
             yinfo += 22
 
             if st["added_repair"] is not None:
-                draw_text(40, yinfo, f"Réparation ajoutée : {st['added_repair']}", (255, 200, 120));
+                draw_text(40, yinfo, f"Réparation ajoutée : {st['added_repair']}", (255, 200, 120))
                 yinfo += 22
 
             # =========================
@@ -1514,101 +1656,110 @@ def marche_pied_pygame(screen, x_init, basis_init, cost):
             right_panel_y = H - 270
 
             if step == 0:
-                draw_text(40, H - 240, "Potentiels E :", (200, 200, 255))
-                yy = H - 220
-                # afficher E triés
+                y = CONTENT_TOP + y_offset
+                draw_text(40, y, "Potentiels E :", (200, 200, 255))
+                y += 20
                 for k in sorted(st["E"].keys()):
-                    draw_text(40, yy, f"{k} = {st['E'][k]}", (230, 230, 230))
-                    yy += 18
+                    draw_text(40, y, f"{k} = {st['E'][k]}", (230, 230, 230))
+                    y += 18
+
+
 
             elif step == 1:
                 draw_transport_matrix(
                     st["x_before"], cost,
                     st["prov_before"], st["cmd_before"],
-                    40, H - 370,
+                    40, CONTENT_TOP + y_offset,
                     title="Matrice transport (avant)"
                 )
 
+
             elif step == 2:
-                # construire c* table
-                cst = st["c_star"]
-                row_labels = [f"P{i}" for i in range(len(cst))]
-                col_labels = [f"C{j}" for j in range(len(cst[0]))]
-                draw_table(40, H - 370, "Coûts potentiels c*", cst, row_labels, col_labels)
-
-            elif step == 3:
-                delt = st["delta"]
-                row_labels = [f"P{i}" for i in range(len(delt))]
-                col_labels = [f"C{j}" for j in range(len(delt[0]))]
-
-                entering = st["entering"]
-                highlight = {}
-                if entering is not None:
-                    highlight[entering] = (255, 80, 80)
-
-                def col_fn(i, j, val):
-                    # 0 en bleu, négatif en rouge, sinon blanc
-                    if val == 0:
-                        return (120, 180, 255)
-                    if val < 0:
-                        return (255, 120, 120)
-                    return (230, 230, 230)
-
                 draw_table(
-                    40, H - 370,
-                    "Coûts marginaux Δ = c - c*",
-                    delt, row_labels, col_labels,
-                    value_color_fn=col_fn,
-                    highlight_cells=highlight
+                    40, CONTENT_TOP + y_offset,
+                    "Coûts potentiels c*",
+                    st["c_star"],
+                    row_labels=[f"P{i}" for i in range(len(st["c_star"]))],
+                    col_labels=[f"C{j}" for j in range(len(st["c_star"][0]))]
                 )
 
 
-            elif step == 4:
-                entering = st["entering"]
-                if st["cycle"] is None:
-                    draw_text(40, H - 240, "Aucun cycle (solution optimale).", (200, 200, 200))
-                else:
-                    # construire highlight cases du cycle
-                    cycle_hl = {}
-                    for (i, j), sgn in st["cycle"]:
-                        if sgn == '+':
-                            cycle_hl[(i, j)] = (80, 255, 80)  # vert
-                        else:
-                            cycle_hl[(i, j)] = (255, 80, 80)  # rouge
-                    # entering en jaune (prioritaire)
-                    if entering is not None:
-                        cycle_hl[entering] = (255, 255, 80)
-                    draw_text(40, H - 390, f"Cycle (θ = {st['theta']}) :", (255, 255, 0))
-                    yy = H - 370
-                    for (i, j), sgn in st["cycle"]:
-                        c = (80, 255, 80) if sgn == '+' else (255, 80, 80)
-                        draw_text(40, yy, f"({i},{j})  {sgn}", c)
-                        yy += 18
-                    # matrice AVANT avec cycle surligné
-                    draw_transport_matrix(
-                        st["x_before"], cost,
-                        st["prov_before"], st["cmd_before"],
-                        380, H - 430,
-                        title="Transport (avant) + cycle",
-                        highlight_cells=cycle_hl
-                    )
-                    # matrice APRES (optionnel: pas besoin du cycle, mais on la montre)
-                    draw_transport_matrix(
-                        st["x_after"], cost,
-                        st["prov_after"], st["cmd_after"],
-                        380, H - 150,
-                        title="Transport (après)",
-                        highlight_cells=None
-                    )
+            elif step == 3:
+
+                draw_table(
+
+                    40, CONTENT_TOP + y_offset,
+
+                    "Coûts marginaux Δ = c - c*",
+
+                    st["delta"],
+
+                    row_labels=[f"P{i}" for i in range(len(st["delta"]))],
+
+                    col_labels=[f"C{j}" for j in range(len(st["delta"][0]))],
+
+                    highlight_cells={st["entering"]: (255, 80, 80)} if st["entering"] else None,
+
+                    value_color_fn=lambda i, j, v: (120, 180, 255) if v == 0 else (255, 120, 120) if v < 0 else (
+                    230, 230, 230)
+
+                )
+
+
+
+            elif step == 4 and st["cycle"]:
+
+                y = CONTENT_TOP + y_offset
+
+                draw_text(40, y, f"Cycle (θ = {st['theta']}) :", (255, 255, 0))
+
+                y += 20
+
+                for (i, j), sgn in st["cycle"]:
+                    draw_text(40, y, f"({i},{j}) {sgn}", (80, 255, 80) if sgn == '+' else (255, 80, 80))
+
+                    y += 18
+
+                y += 10
+
+                draw_transport_matrix(
+
+                    st["x_before"], cost,
+
+                    st["prov_before"], st["cmd_before"],
+
+                    380, y,
+
+                    title="Transport (avant) + cycle"
+
+                )
+
+                y += 260
+
+                draw_transport_matrix(
+
+                    st["x_after"], cost,
+
+                    st["prov_after"], st["cmd_after"],
+
+                    380, y,
+
+                    title="Transport (après)"
+
+                )
 
             # =========================
             # AIDE
             # =========================
             draw_text(
-                W - 620, 20,
+                W - 820, 20,
                 "↑↓ Scroll | N/P Étapes | O/K Itérations | M/L Début/Fin | ESC Retour",
                 (150, 150, 150), font_small
             )
+            draw_text(40, CONTENT_TOP - 30, f"y_offset = {y_offset}", (255, 80, 80))
+
+
+
 
             pygame.display.flip()
             clock.tick(60)
